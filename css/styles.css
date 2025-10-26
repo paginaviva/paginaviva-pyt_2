@@ -1,0 +1,41 @@
+/* styles.css - global */
+
+/* Header / brand */
+.site-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e6e6e6;
+  padding: 10px 14px;
+}
+.container.header-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand { display:flex; align-items:center; gap:12px; }
+.site-logo { height:48px; width:auto; display:block; }
+.site-title { font-size: 1.4rem; margin: 0; color: #222; font-weight:700; font-family: "Georgia", serif; }
+
+/* header right area */
+.header-right { display:flex; align-items:center; gap:10px; font-size:0.95rem; color:#444; }
+.user-info { color:#333; }
+
+/* Buttons */
+.btn {
+  display:inline-block;
+  background:#0b6cff;
+  color:#fff;
+  padding:6px 10px;
+  border-radius:6px;
+  text-decoration:none;
+}
+.btn.small { padding:4px 8px; font-size:0.9rem; }
+
+/* Page scaffold fallback */
+body { font-family: Arial, Helvetica, sans-serif; margin: 0; color: #222; background: #fff; }
+.template { border: 1px solid #ddd; padding: 0.75rem; margin-bottom: 1rem; border-radius: 6px; background:#fafafa; }
+.prompt { background:#111; color:#e6e6e6; padding:0.5rem; overflow:auto; max-height:240px; }
+a { color:#0b6cff; text-decoration:none; }
+a:hover { text-decoration:underline; }
+.container { max-width: 980px; margin: 0 auto; padding: 14px; }

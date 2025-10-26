@@ -1,0 +1,28 @@
+# Archivos de configuración con credenciales
+config/config.json
+
+# Archivos temporales
+tmp/uploads/*
+tmp/logs/*
+!tmp/uploads/.gitkeep
+!tmp/logs/.gitkeep
+
+# Documentos procesados (pueden contener información sensible)
+docs/*
+!docs/.gitkeep
+
+# Archivos de respaldo
+*.bak
+*.backup
+*~
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Variables de entorno
+.env
+.env.local
