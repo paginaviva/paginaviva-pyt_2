@@ -206,8 +206,8 @@ function apio_call_openai($docBasename, $prompt, $params = []) {
     $apiKey = $cfg['apio_key'] ?? '';
     $apiUrl = $cfg['apio_url'] ?? 'https://api.openai.com/v1/chat/completions';
     
-    if (!$apiKey) {
-        return apio_log_error($docBasename, '1B', 'API key no configurada');
+    if (!$apiKey || $apiKey === 'TU_API_KEY_REAL_AQUI' || $apiKey === '12345') {
+        return apio_log_error($docBasename, '1B', 'API key no configurada o inválida. Configura una API key válida de OpenAI en config.json');
     }
     
     // Combinar parámetros
