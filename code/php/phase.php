@@ -4,7 +4,7 @@ session_start();
 if (!isset($_SESSION['user'])) {
     $cfg = json_decode(file_get_contents(__DIR__ . '/../../config/config.json'), true);
     $pb = rtrim($cfg['public_base'] ?? '', '/');
-    header('Location: ' . $pb . '/ed_cfle/code/php/login.php');
+    header('Location: ' . $pb . '/code/php/login.php');
     exit;
 }
 $fase = isset($_GET['fase']) ? intval($_GET['fase']) : 1;
@@ -23,7 +23,7 @@ $templates = $PROMPTS[$fase] ?? [];
     <section class="template">
       <h2><?=htmlspecialchars($tpl['title'])?></h2>
       <pre class="prompt"><?=htmlspecialchars($tpl['prompt'])?></pre>
-      <form method="post" action="<?php echo htmlspecialchars($pb . '/ed_cfle/code/php/process_phase.php'); ?>">
+      <form method="post" action="<?php echo htmlspecialchars($pb . '/code/php/process_phase.php'); ?>">
         <input type="hidden" name="fase" value="<?=htmlspecialchars($fase)?>">
         <input type="hidden" name="template_id" value="<?=htmlspecialchars($tpl['id'])?>">
         <label>Modelo:
@@ -42,7 +42,7 @@ $templates = $PROMPTS[$fase] ?? [];
   <?php if ($fase === 1): ?>
     <section>
       <h2>Fase 1A — Procesar PDF (Extraer TXT y imágenes)</h2>
-      <form method="post" action="<?php echo htmlspecialchars($pb . '/ed_cfle/code/php/process_pdf.php'); ?>">
+      <form method="post" action="<?php echo htmlspecialchars($pb . '/code/php/process_pdf.php'); ?>">
         <label>Nombre base del PDF: <input name="doc_basename" required></label><br>
         <label>Modelo: <input name="model" value="<?=$config['default_model']?>"></label><br>
         <label>Temperature: <input name="temperature" value="<?=$config['default_params']['temperature']?>"></label><br>

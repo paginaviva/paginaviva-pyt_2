@@ -8,5 +8,5 @@ $pb = rtrim($cfg['public_base'] ?? '', '/');
 
 session_unset();
 session_destroy();
-header('Location: ' . $pb . '/ed_cfle/code/php/login.php');
+header('Location: ' . $pb . '/code/php/login.php');
 exit;

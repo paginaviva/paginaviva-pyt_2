@@ -5,10 +5,17 @@
 
 session_start();
 
-// Rutas/URLs de destino
-//$loginPath = '/ed_cfle/code/php/login.php';
-$loginPath = '/code/php/login.php';
-$panelUrl = 'https://cfle.plazza.xyz/code/php/index.php';
+// Cargar configuración para obtener URLs dinámicas
+$projectRoot = dirname(__DIR__);
+$cfgPath = $projectRoot . '/config/config.json';
+$config = [];
+if (file_exists($cfgPath)) {
+    $config = json_decode(file_get_contents($cfgPath), true) ?? [];
+}
+
+$publicBase = rtrim($config['public_base'] ?? '', '/');
+$loginPath = $publicBase . '/code/php/login.php';
+$panelUrl = $publicBase . '/code/php/index.php';
 
 if (!isset($_SESSION['user'])) {
     // Usuario no logueado -> lanzar login

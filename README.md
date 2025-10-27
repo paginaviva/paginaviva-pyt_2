@@ -1,39 +1,188 @@
-```markdown
-# ed_cfle — Scaffold inicial
+# Ed CFLE - Sistema de Procesamiento de PDFs con IA
 
-Estructura generada (scaffold) para revisión y aprobación. No se ha ejecutado nada en el servidor.
+**📝 Actualizado el 27 de octubre de 2025**
 
-Rutas importantes (tal y como confirmaste):
-- Configuración: /home/plazzaxy/public_html/ed_cfle/config/
-  - config.json
-  - prompts.php
-  - users.json
-- Temporales y uploads: /home/plazzaxy/public_html/ed_cfle/tmp/
-- Documentos generados (cada PDF genera un subdirectorio con mismo nombre base): /home/plazzaxy/public_html/ed_cfle/docs/
-- Código: /home/plazzaxy/public_html/ed_cfle/code/
-  - php, js, css
+Sistema completo para procesar documentos PDF mediante inteligencia artificial, implementado para el dominio **cfle.plazza.xyz**.
 
-Archivos principales de este scaffold:
-- .user.ini — sugerencias para PHP (upload_max_filesize=10M etc)
-- config/config.json — configuración principal (API key placeholder, paths, límites)
-- config/prompts.php — archivo PHP con plantillas P por fase (edición manual)
-- config/users.json — usuarios (editar y generar password_hash con PHP)
-- config/.htaccess — bloqueo de acceso web a ficheros de config
-- code/php/* — endpoints scaffold: index, login, upload, fase, process, cleanup
-- code/js/upload.js — ejemplo de cliente chunked (scaffold)
-- code/css/styles.css — estilos mínimos
-- README.md — este archivo
+## 🌐 Configuración de Dominios
 
-Siguientes pasos sugeridos tras aprobar el scaffold:
-1. Revisar y editar config/config.json (poner apio_key y ajustar tiempo/límites).
-2. Generar una contraseña con `password_hash('tuPassword', PASSWORD_DEFAULT)` y pegar el hash en config/users.json.
-3. Subir los archivos al servidor en las rutas confirmadas y fijar permisos (config/*.json y users.json con 600).
-4. Probar subida de un PDF pequeño y comprobar ensamblado en /docs/<basename>/.
-5. Implementar la integración real con APIO en process_phase.php y la extracción via APIO en el endpoint de procesamiento (uso de chunking por texto).
-6. Ajustar upload.js para enviar FormData con metadata + chunk blob en cada POST (en el scaffold el envío binario es conceptual; se completará en la integración).
-7. Programar llamadas a Imagick para extraer/rasterizar imágenes en /docs/<basename>/images/ y generar el TXT final vía APIO.
-8. Configurar cron (opcional) para ejecutar cleanup.php regularmente y rotar logs.
+- **plazza.xyz** → `/home/udnpviva/public_html`
+- **cfle.plazza.xyz** → `/home/udnpviva/public_html/ed_cfle` (subdominio)
 
-Notas de seguridad:
-- Mantén config/*.json y users.json con permisos 600 y, si es posible, fuera del webroot o protegidos por .htaccess.
-- Forzar HTTPS y cookie flags para sesiones.
+## 📁 Estructura del Servidor
+
+```
+/home/udnpviva/public_html/ed_cfle/
+├── .htaccess
+├── Dir+Arch.txt
+├── index.php                    # Landing principal con redirección
+├── php.ini
+├── phpinfo.php
+├── README.md
+├── code/
+│   ├── js/
+│   │   └── upload.js           # Cliente para subida chunked de archivos
+│   └── php/
+│       ├── cleanup.php         # Limpieza automática de archivos temporales
+│       ├── docs_list.php       # Lista de documentos procesados
+│       ├── header.php          # Header común con menú y autenticación
+│       ├── index.php           # Panel principal (post-login)
+│       ├── lib_apio.php        # Biblioteca de utilidades y configuración
+│       ├── login.php           # Sistema de autenticación
+│       ├── logout.php          # Cierre de sesión
+│       ├── phase.php           # Gestión de fases de procesamiento
+│       ├── process_pdf.php     # Procesamiento principal de PDFs
+│       ├── process_phase.php   # Procesamiento por fases con IA
+│       ├── upload.php          # Endpoint para subida de archivos
+│       └── upload_form.php     # Formulario de subida (Fase 1A)
+├── config/
+│   ├── config.json            # Configuración principal (con API keys)
+│   ├── prompts.php            # Plantillas de prompts para IA
+│   └── users.json             # Base de datos de usuarios
+├── css/
+│   ├── BeeViva_Logo_Colour.avif # Logo de la aplicación
+│   └── styles.css             # Estilos principales
+├── tmp/                       # Archivos temporales y uploads
+└── uploads/                   # Área de subida de archivos
+```
+
+## ⚙️ Características Principales
+
+### 🔐 Sistema de Autenticación
+- Login/logout con sesiones PHP
+- Gestión de usuarios mediante `users.json`
+- Header dinámico con menú contextual
+
+### 📤 Subida de Archivos
+- Subida chunked para archivos grandes (hasta 10MB por defecto)
+- Validación de tipos de archivo (PDFs)
+- Gestión temporal segura
+
+### 🤖 Procesamiento con IA
+- Integración con OpenAI API
+- Procesamiento por fases configurables
+- Extracción y análisis de contenido PDF
+- Generación de respuestas contextuales
+
+### 🧹 Gestión Automática
+- Limpieza de archivos temporales
+- Rotación de logs
+- Configuración de tiempos de retención
+
+## 🚀 Configuración Inicial
+
+### 1. Configurar API Key de OpenAI
+```bash
+# Copiar archivo de ejemplo
+cp config/config.example.json config/config.json
+
+# Editar y agregar tu API key real
+nano config/config.json
+```
+
+### 2. Configurar Usuarios
+```php
+// Generar hash de contraseña
+$hash = password_hash('tu_contraseña', PASSWORD_DEFAULT);
+```
+
+Agregar el hash generado a `config/users.json`:
+```json
+{
+  "tu_usuario": "hash_generado_aqui"
+}
+```
+
+### 3. Permisos de Archivos (Importante)
+```bash
+# Proteger archivos de configuración
+chmod 600 config/*.json
+chmod 600 config/users.json
+
+# Permisos de escritura para directorios temporales
+chmod 755 tmp/ uploads/
+```
+
+### 4. URLs de Acceso
+- **Aplicación principal**: https://cfle.plazza.xyz
+- **Login directo**: https://cfle.plazza.xyz/code/php/login.php
+- **Panel administrativo**: https://cfle.plazza.xyz/code/php/index.php
+
+## 🔧 Configuración Técnica
+
+### Límites de Archivos
+- **Upload máximo**: 10MB por archivo
+- **Documento máximo**: 20MB procesado
+- **DPI de imágenes**: 300 DPI
+
+### Modelos de IA
+- **Modelo por defecto**: gpt-5-mini
+- **Temperatura**: 0.2 (respuestas consistentes)
+- **Tokens máximos**: 1500 por respuesta
+
+### Limpieza Automática
+- **Archivos incompletos**: 6 horas
+- **Retención de documentos**: 30 días
+
+## 🛡️ Seguridad
+
+- Archivos de configuración protegidos con `.htaccess`
+- Validación de sesiones en todos los endpoints
+- Sanitización de inputs
+- URLs públicas configurables via `public_base`
+- Gestión segura de archivos temporales
+
+## 📋 Flujo de Trabajo
+
+1. **Login** → Autenticación de usuario
+2. **Subida** → Upload de PDF (Fase 1A)
+3. **Procesamiento** → Análisis con IA por fases
+4. **Resultados** → Visualización de documentos procesados
+5. **Limpieza** → Gestión automática de recursos
+
+## 🔄 Mantenimiento
+
+### Limpieza Manual
+```bash
+php /home/udnpviva/public_html/ed_cfle/code/php/cleanup.php
+```
+
+### Logs de Sistema
+Los logs se almacenan en `tmp/logs/` y se rotan automáticamente.
+
+### Monitoreo
+- Verificar espacio en disco regularmente
+- Revisar logs de errores PHP
+- Monitorear uso de API de OpenAI
+
+## 📚 Documentación Técnica
+
+### Funcionalidades del Sistema
+
+**`index.php`** - Landing principal que redirige según estado de autenticación:
+- Usuario no logueado → `/code/php/login.php`
+- Usuario logueado → `/code/php/index.php`
+
+**`code/php/header.php`** - Header unificado con:
+- Logo BeeVIVA y navegación
+- Menú desplegable contextual (solo para usuarios autenticados)
+- Gestión de URLs públicas vía configuración
+
+**`code/php/lib_apio.php`** - Biblioteca central que proporciona:
+- Carga centralizada de configuración
+- Resolución de rutas absolutas/relativas
+- Utilidades para gestión de archivos
+
+**`code/php/upload_form.php`** - Interfaz de subida (Fase 1A) con:
+- Validación client-side
+- Integración con `upload.js` para chunking
+- Estilos card responsivos
+
+### Estructura de Configuración
+
+El archivo `config/config.json` centraliza:
+- Credenciales API de OpenAI
+- Rutas del sistema y URLs públicas
+- Límites de archivos y procesamiento
+- Parámetros del modelo de IA
+- Configuración de limpieza automática
