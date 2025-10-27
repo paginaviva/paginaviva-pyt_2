@@ -59,32 +59,46 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
     <?php require_once __DIR__ . '/header.php'; ?>
     
     <div class="container">
-        <h2>🤖 Fase 1B — Procesar PDF en OpenAI</h2>
-        <p>Selecciona un documento subido en la Fase 1A y configura los parámetros para extraer texto usando IA.</p>
+        <h2>&#129302; Fase 1B &mdash; Procesar PDF en OpenAI</h2>
+        <p>Procesa el documento subido en la Fase 1A y configura los par&aacute;metros para extraer texto usando IA.</p>
+        
+        <!-- Mostrar documento a procesar (solo lectura) -->
+        <?php if ($preSelectedDoc && !empty($availableDocs)): ?>
+            <?php 
+            $currentDoc = null;
+            foreach ($availableDocs as $doc) {
+                if ($doc['basename'] === $preSelectedDoc) {
+                    $currentDoc = $doc;
+                    break;
+                }
+            }
+            ?>
+            <?php if ($currentDoc): ?>
+                <div class="document-info">
+                    <h3>&#128196; Documento a procesar:</h3>
+                    <div class="doc-display">
+                        <strong><?php echo htmlspecialchars($currentDoc['basename']); ?></strong><br>
+                        &#128193; Tama&ntilde;o: <?php echo round($currentDoc['pdf_size'] / 1024); ?> KB<br>
+                        <?php if ($currentDoc['has_txt']): ?>
+                            &#9989; Ya procesado anteriormente
+                        <?php else: ?>
+                            &#128472; Pendiente de procesar
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <div class="error-message">
+                &#10060; No se encontr&oacute; el documento especificado. <a href="<?php echo apio_public_from_cfg_path('/code/php/upload_form.php'); ?>">Volver a Fase 1A</a>
+            </div>
+        <?php endif; ?>
         
         <!-- Formulario Principal -->
+        <?php if ($currentDoc): ?>
         <div class="form-section">
             <form id="phase1bForm">
-                <!-- Selección de Documento -->
-                <div class="field-group">
-                    <label for="docSelect"><strong>Documento a procesar:</strong></label>
-                    <select id="docSelect" name="doc_basename" required>
-                        <option value="">— Seleccionar documento —</option>
-                        <?php foreach ($availableDocs as $doc): ?>
-                            <option value="<?php echo htmlspecialchars($doc['basename']); ?>" 
-                                    data-size="<?php echo $doc['pdf_size']; ?>" 
-                                    data-has-txt="<?php echo $doc['has_txt'] ? 'true' : 'false'; ?>"
-                                    <?php echo ($doc['basename'] === $preSelectedDoc) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($doc['basename']); ?> 
-                                (<?php echo round($doc['pdf_size'] / 1024); ?> KB)
-                                <?php if ($doc['has_txt']): ?>
-                                    ✅ Procesado
-                                <?php endif; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div id="docInfo" class="doc-info" style="display: none;"></div>
-                </div>
+                <!-- Campo oculto con el documento -->
+                <input type="hidden" name="doc_basename" value="<?php echo htmlspecialchars($preSelectedDoc); ?>">
                 
                 <!-- Parámetros APIO -->
                 <fieldset class="apio-params">
@@ -107,8 +121,8 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                             <label for="temperature">Temperatura:</label>
                             <input type="range" id="temperature" name="temperature" 
                                    min="0" max="1" step="0.1" 
-                                   value="<?php echo $apioDefaults['temperature'] ?? 0.2; ?>">
-                            <span id="tempValue"><?php echo $apioDefaults['temperature'] ?? 0.2; ?></span>
+                                   value="<?php echo $apioDefaults['temperature'] ?? 0; ?>">
+                            <span id="tempValue"><?php echo $apioDefaults['temperature'] ?? 0; ?></span>
                         </div>
                     </div>
                     
@@ -132,35 +146,36 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                 
                 <!-- Botón de Acción -->
                 <div class="action-section">
-                    <button type="submit" id="processBtn" class="btn btn-primary" disabled>
-                        🚀 Procesar con OpenAI
+                    <button type="submit" id="processBtn" class="btn btn-primary">
+                        &#128640; Procesar con OpenAI
                     </button>
                     <div id="statusIndicator" class="status-indicator"></div>
                 </div>
             </form>
         </div>
+        <?php endif; ?>
         
         <!-- Panel de Debug (Expandible) -->
         <div id="debugPanel" class="debug-panel" style="display: none;">
-            <h3>🔍 Información de Debug</h3>
+            <h3>&#128269; Informaci&oacute;n de Debug</h3>
             
             <div class="debug-section" id="preflightSection" style="display: none;">
-                <h4>✅ Pre-flight Checks</h4>
+                <h4>&#9989; Pre-flight Checks</h4>
                 <div id="preflightContent"></div>
             </div>
             
             <div class="debug-section" id="modelSection" style="display: none;">
-                <h4>🤖 Información del Modelo</h4>
+                <h4>&#129302; Informaci&oacute;n del Modelo</h4>
                 <div id="modelContent"></div>
             </div>
             
             <div class="debug-section" id="promptSection" style="display: none;">
-                <h4>📝 Prompt Utilizado</h4>
+                <h4>&#128221; Prompt Utilizado</h4>
                 <pre id="promptContent"></pre>
             </div>
             
             <div class="debug-section" id="requestSection" style="display: none;">
-                <h4>📤 Solicitud a OpenAI</h4>
+                <h4>&#128228; Solicitud a OpenAI</h4>
                 <div class="debug-subsection">
                     <h5>Headers:</h5>
                     <pre id="requestHeaders"></pre>
@@ -172,30 +187,30 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             </div>
             
             <div class="debug-section" id="responseSection" style="display: none;">
-                <h4>📥 Respuesta de OpenAI</h4>
+                <h4>&#128229; Respuesta de OpenAI</h4>
                 <pre id="responseContent"></pre>
             </div>
         </div>
         
         <!-- Resultados -->
         <div id="resultsPanel" class="results-panel" style="display: none;">
-            <h3>📄 Resultado de la Extracción</h3>
+            <h3>&#128196; Resultado de la Extracci&oacute;n</h3>
             
             <div class="result-info">
                 <div id="extractionInfo"></div>
             </div>
             
             <div class="extracted-text">
-                <h4>Texto Extraído:</h4>
+                <h4>Texto Extra&iacute;do:</h4>
                 <div id="extractedTextContent" class="text-content"></div>
             </div>
             
             <div class="action-buttons">
                 <button id="downloadTxt" class="btn btn-secondary" style="display: none;">
-                    💾 Descargar .TXT
+                    &#128190; Descargar .TXT
                 </button>
                 <button id="continuePhase2" class="btn btn-success" style="display: none;">
-                    ➡️ Continuar a Fase 2A
+                    &#10145; Continuar a Fase 2A
                 </button>
             </div>
         </div>
@@ -207,6 +222,30 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             background: #f8f9fa;
             padding: 20px;
             border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .document-info {
+            background: #e8f4fd;
+            border: 2px solid #007cba;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .doc-display {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 15px;
             margin-bottom: 20px;
         }
         
@@ -233,6 +272,19 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+        }
+        
+        .field-group input[type="range"] {
+            width: calc(100% - 50px);
+            margin-right: 10px;
+        }
+        
+        .field-group span {
+            display: inline-block;
+            min-width: 30px;
+            text-align: center;
+            font-weight: 700;
+            color: #007cba;
         }
         
         .apio-params {
@@ -395,13 +447,11 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         const APIO_STORAGE_KEY = 'ed_cfle_apio_params';
         
         // Elementos DOM
-        const docSelect = document.getElementById('docSelect');
-        const docInfo = document.getElementById('docInfo');
+        const form = document.getElementById('phase1bForm');
         const processBtn = document.getElementById('processBtn');
         const statusIndicator = document.getElementById('statusIndicator');
         const debugPanel = document.getElementById('debugPanel');
         const resultsPanel = document.getElementById('resultsPanel');
-        const form = document.getElementById('phase1bForm');
         
         // Sliders
         const temperatureSlider = document.getElementById('temperature');
@@ -416,9 +466,9 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             loadApioParams();
             setupEventListeners();
             
-            // Si hay documento pre-seleccionado, activar automáticamente
-            if (docSelect.value) {
-                onDocumentChange();
+            // Habilitar botón automáticamente ya que el documento está pre-seleccionado
+            if (processBtn) {
+                processBtn.disabled = false;
             }
         }
         
@@ -458,9 +508,6 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function setupEventListeners() {
-            // Selección de documento
-            docSelect.addEventListener('change', onDocumentChange);
-            
             // Sliders
             temperatureSlider.addEventListener('input', (e) => {
                 tempValue.textContent = e.target.value;
@@ -480,29 +527,6 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             form.addEventListener('submit', onFormSubmit);
         }
         
-        function onDocumentChange() {
-            const selected = docSelect.selectedOptions[0];
-            
-            if (!selected || !selected.value) {
-                docInfo.style.display = 'none';
-                processBtn.disabled = true;
-                return;
-            }
-            
-            const basename = selected.value;
-            const size = parseInt(selected.dataset.size);
-            const hasTxt = selected.dataset.hasTxt === 'true';
-            
-            docInfo.innerHTML = `
-                <strong>${basename}</strong><br>
-                📁 Tamaño: ${Math.round(size / 1024)} KB<br>
-                ${hasTxt ? '✅ Ya procesado anteriormente' : '🔄 Pendiente de procesar'}
-            `;
-            docInfo.style.display = 'block';
-            
-            processBtn.disabled = false;
-            processBtn.textContent = hasTxt ? '🔄 Re-procesar con OpenAI' : '🚀 Procesar con OpenAI';
-        }
         
         async function onFormSubmit(e) {
             e.preventDefault();
@@ -539,7 +563,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function handleSuccess(result) {
-            showStatus('✅ Extracción completada exitosamente', 'success');
+            showStatus('&#9989; Extracci&oacute;n completada exitosamente', 'success');
             
             // Mostrar debug si disponible
             if (result.debug_info) {
@@ -551,7 +575,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function handleError(error) {
-            showStatus('❌ Error: ' + error, 'error');
+            showStatus('&#10060; Error: ' + error, 'error');
         }
         
         function showStatus(message, type) {
@@ -566,19 +590,19 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             if (debugInfo.preflight) {
                 document.getElementById('preflightSection').style.display = 'block';
                 document.getElementById('preflightContent').innerHTML = `
-                    ✅ PDF existe: ${debugInfo.preflight.pdf_exists ? 'Sí' : 'No'}<br>
-                    📏 Tamaño PDF: ${Math.round(debugInfo.preflight.pdf_size / 1024)} KB<br>
-                    📝 Prompt listo: ${debugInfo.preflight.prompt_ready ? 'Sí' : 'No'}
+                    &#9989; PDF existe: ${debugInfo.preflight.pdf_exists ? 'S&iacute;' : 'No'}<br>
+                    &#128207; Tama&ntilde;o PDF: ${Math.round(debugInfo.preflight.pdf_size / 1024)} KB<br>
+                    &#128221; Prompt listo: ${debugInfo.preflight.prompt_ready ? 'S&iacute;' : 'No'}
                 `;
             }
             
             if (debugInfo.model_info) {
                 document.getElementById('modelSection').style.display = 'block';
                 document.getElementById('modelContent').innerHTML = `
-                    🤖 Modelo: ${debugInfo.model_info.model}<br>
-                    🌡️ Temperatura: ${debugInfo.model_info.temperature}<br>
-                    🎯 Max tokens: ${debugInfo.model_info.max_tokens}<br>
-                    📊 Top P: ${debugInfo.model_info.top_p}
+                    &#129302; Modelo: ${debugInfo.model_info.model}<br>
+                    &#127777; Temperatura: ${debugInfo.model_info.temperature}<br>
+                    &#127919; Max tokens: ${debugInfo.model_info.max_tokens}<br>
+                    &#128202; Top P: ${debugInfo.model_info.top_p}
                 `;
             }
             
@@ -612,13 +636,13 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             // Información de la extracción
             const usage = result.api_usage;
             let infoHtml = `
-                📄 <strong>Documento:</strong> ${result.doc_basename}<br>
-                📝 <strong>Longitud texto:</strong> ${result.text_length.toLocaleString()} caracteres<br>
-                ⏰ <strong>Procesado:</strong> ${result.timestamp}
+                &#128196; <strong>Documento:</strong> ${result.doc_basename}<br>
+                &#128221; <strong>Longitud texto:</strong> ${result.text_length.toLocaleString()} caracteres<br>
+                &#9200; <strong>Procesado:</strong> ${result.timestamp}
             `;
             
             if (usage) {
-                infoHtml += `<br>🔢 <strong>Tokens usados:</strong> ${usage.total_tokens || 'N/A'}`;
+                infoHtml += `<br>&#128290; <strong>Tokens usados:</strong> ${usage.total_tokens || 'N/A'}`;
                 if (usage.prompt_tokens) {
                     infoHtml += ` (${usage.prompt_tokens} prompt + ${usage.completion_tokens} respuesta)`;
                 }
@@ -632,16 +656,6 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             // Mostrar botones
             document.getElementById('downloadTxt').style.display = 'inline-block';
             document.getElementById('continuePhase2').style.display = 'inline-block';
-            
-            // Actualizar la info del documento en el select
-            const option = docSelect.querySelector(`option[value="${result.doc_basename}"]`);
-            if (option) {
-                option.dataset.hasTxt = 'true';
-                option.textContent = option.textContent.replace('🔄 Pendiente de procesar', '✅ Procesado');
-                if (!option.textContent.includes('✅ Procesado')) {
-                    option.textContent += ' ✅ Procesado';
-                }
-            }
         }
     </script>
 </body>
