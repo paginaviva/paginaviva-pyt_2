@@ -1,0 +1,37 @@
+﻿{
+  "apio_key": "sk-proj-GqH1zx",
+  "apio_url": "https://api.openai.com/v1/chat/completions",
+  "show_headers": true,
+  "show_body": true,
+  "show_debug": true,
+  "upload_max_filesize": 10485760,
+  "max_document_size": 20971520,
+  "project_root": "/home/plazzaxy/public_html/ed_cfle",
+  "tmp_dir": "/home/plazzaxy/public_html/ed_cfle/tmp",
+  "docs_dir": "/home/plazzaxy/public_html/ed_cfle/docs",
+  "code_dir": "/home/plazzaxy/public_html/ed_cfle/code",
+  "css_dir": "/home/plazzaxy/public_html/ed_cfle/css",
+  "dpi_images": 300,
+  "cleanup": {
+    "incomplete_hours": 6,
+    "keep_days": 30
+  },
+  "debug_display": {
+    "show_preflight": true,
+    "show_model_info": true,
+    "show_prompt": true,
+    "show_errors": true,
+    "show_headers": true,
+    "show_body": true
+  },
+  "apio_models": ["gpt-5-mini", "gpt-5", "gpt-4o", "gpt-4o-mini", "gpt-4", "gpt-3.5-turbo"],
+  "apio_defaults": {
+    "model": "gpt-5-mini",
+    "temperature": 0,
+    "max_tokens": 1500,
+    "top_p": 1.0
+  },
+  "logo_path": "/css/BeeViva_Logo_Colour.avif",
+  "css_path": "/css/styles.css",
+  "public_base": "https://cfle.plazza.xyz"
+}
