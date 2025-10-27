@@ -38,6 +38,7 @@ $logo_url = apio_public_from_cfg_path($logo_path);
 
 // Page links (web paths)
 $upload_url = apio_public_from_cfg_path('/code/php/upload_form.php');
+$phase1b_url = apio_public_from_cfg_path('/code/php/phase_1b.php');
 $docs_url   = apio_public_from_cfg_path('/code/php/docs_list.php');
 $login_url  = apio_public_from_cfg_path('/code/php/login.php');
 $logout_url = apio_public_from_cfg_path('/code/php/logout.php');
@@ -74,6 +75,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) session_start();
         <select id="mainMenu" class="menu-select" onchange="if(this.value) window.location.href=this.value;">
           <option value="">— Seleccionar —</option>
           <option value="<?php echo htmlspecialchars($upload_url, ENT_QUOTES); ?>">Subir PDF (fase 1A)</option>
+          <option value="<?php echo htmlspecialchars($phase1b_url, ENT_QUOTES); ?>">Procesar PDF con IA (fase 1B)</option>
           <option value="<?php echo htmlspecialchars($docs_url, ENT_QUOTES); ?>">Lista de documentos procesados</option>
         </select>
 
