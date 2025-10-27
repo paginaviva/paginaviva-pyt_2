@@ -563,7 +563,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function handleSuccess(result) {
-            showStatus('&#9989; Extracci&oacute;n completada exitosamente', 'success');
+            showStatus('✅ Extracción completada exitosamente', 'success');
             
             // Mostrar debug si disponible
             if (result.debug_info) {
@@ -575,7 +575,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function handleError(error) {
-            showStatus('&#10060; Error: ' + error, 'error');
+            showStatus('❌ Error: ' + error, 'error');
         }
         
         function showStatus(message, type) {
@@ -590,7 +590,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             if (debugInfo.preflight) {
                 document.getElementById('preflightSection').style.display = 'block';
                 document.getElementById('preflightContent').innerHTML = `
-                    &#9989; PDF existe: ${debugInfo.preflight.pdf_exists ? 'S&iacute;' : 'No'}<br>
+                    ✅ PDF existe: ${debugInfo.preflight.pdf_exists ? 'Sí' : 'No'}<br>
                     &#128207; Tama&ntilde;o PDF: ${Math.round(debugInfo.preflight.pdf_size / 1024)} KB<br>
                     &#128221; Prompt listo: ${debugInfo.preflight.prompt_ready ? 'S&iacute;' : 'No'}
                 `;

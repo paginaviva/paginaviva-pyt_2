@@ -2,6 +2,15 @@
 // login.php - redirect on already-logged and on success
 // Robust paths: compute project root and use config['public_base'] + relative panel path.
 
+// Configurar parámetros de sesión ANTES de session_start()
+if (function_exists('session_set_cookie_params')) {
+    session_set_cookie_params([
+        'httponly' => true,
+        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'samesite' => 'Lax'
+    ]);
+}
+
 session_start();
 
 // project root and config/users paths
@@ -41,13 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($u['password_hash']) && password_verify($password, $u['password_hash'])) {
                     // authenticated
                     $_SESSION['user'] = $username;
-                    if (function_exists('session_set_cookie_params')) {
-                        session_set_cookie_params([
-                            'httponly' => true,
-                            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-                            'samesite' => 'Lax'
-                        ]);
-                    }
                     header('Location: ' . $panelUrl, true, 302);
                     exit;
                 } else {

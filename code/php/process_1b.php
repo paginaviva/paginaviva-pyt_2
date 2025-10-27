@@ -1,9 +1,10 @@
 <?php
-// process_1b.php - Backend para Fase 1B: Procesamiento PDF con OpenAI API
-// Recibe documentos de F1A, ejecuta p_extract_text, guarda .txt UTF-8 BOM
+// process_1b.php - Backend SIMPLIFICADO para Fase 1B
+// Extrae texto de PDF y opcionalmente lo procesa con OpenAI
 
 session_start();
 require_once __DIR__ . '/lib_apio.php';
+require_once __DIR__ . '/extract_pdf_text.php';
 
 // Verificar autenticación
 if (empty($_SESSION['user'])) {
@@ -59,102 +60,53 @@ apio_log_event($docBasename, '1B', 'INFO', 'Iniciando procesamiento Fase 1B', [
 ]);
 
 try {
-    // Obtener prompt p_extract_text
-    if (!isset($PROMPTS[1]['p_extract_text'])) {
-        echo json_encode(apio_log_error($docBasename, '1B', 'Prompt p_extract_text no encontrado'));
-        exit;
+    // ENFOQUE SIMPLIFICADO: Solo extraer texto del PDF
+    apio_log_event($docBasename, '1B', 'INFO', 'Iniciando extracción simple de texto PDF');
+    
+    // Extraer texto usando función simple
+    $extractResult = process_pdf_to_txt($pdfPath, $docBasename);
+    
+    if (!$extractResult['success']) {
+        // Aún así devolvemos el resultado, aunque sea fallback
+        apio_log_event($docBasename, '1B', 'WARNING', 'Extracción automática falló, usando método fallback', [
+            'error' => $extractResult['error'],
+            'method' => $extractResult['extraction_method']
+        ]);
+    } else {
+        apio_log_event($docBasename, '1B', 'SUCCESS', 'Texto extraído correctamente', [
+            'method' => $extractResult['extraction_method'],
+            'text_length' => $extractResult['text_length']
+        ]);
     }
     
-    $promptTemplate = $PROMPTS[1]['p_extract_text']['prompt'];
-    
-    // Para esta implementación inicial, usamos el prompt directamente
-    // En futuras versiones se puede expandir para incluir placeholders PDF_BASE64, etc.
-    $prompt = "Archivo PDF a procesar: " . $docBasename . ".pdf\n\n" . $promptTemplate;
-    
-    // Preparar parámetros API
-    $apiParams = [
-        'model' => $model,
-        'temperature' => $temperature,
-        'max_tokens' => $maxTokens,
-        'top_p' => $topP
-    ];
-    
-    // Realizar llamada a OpenAI
-    $result = apio_call_openai($docBasename, $prompt, $apiParams);
-    
-    if (!$result['ok']) {
-        echo json_encode($result);
-        exit;
-    }
-    
-    // Guardar texto extraído como .txt UTF-8 BOM
-    $txtPath = $docDir . DIRECTORY_SEPARATOR . $docBasename . '.txt';
-    $textContent = $result['content'];
-    
-    // Agregar BOM UTF-8
-    $bomUtf8 = "\xEF\xBB\xBF";
-    $textWithBom = $bomUtf8 . $textContent;
-    
-    if (file_put_contents($txtPath, $textWithBom, LOCK_EX) === false) {
-        echo json_encode(apio_log_error($docBasename, '1B', 'Error al guardar archivo .txt'));
-        exit;
-    }
-    
-    // Log éxito
-    $successData = [
-        'txt_path' => $txtPath,
-        'text_length' => strlen($textContent),
-        'tokens_used' => $result['raw_response']['usage'] ?? null
-    ];
-    
-    apio_log_success($docBasename, '1B', 'Fase 1B completada exitosamente', $successData);
-    
-    // Preparar respuesta
+    // Respuesta simple y clara
     $response = [
         'ok' => true,
-        'message' => 'Texto extraído y guardado correctamente',
+        'message' => $extractResult['success'] ? 'Texto extraído exitosamente' : 'PDF procesado con método básico',
         'phase' => '1B',
         'doc_basename' => $docBasename,
-        'txt_path' => $txtPath,
-        'text_content' => $textContent,
-        'text_length' => strlen($textContent),
-        'api_usage' => $result['raw_response']['usage'] ?? null,
+        'txt_path' => $extractResult['txt_path'],
+        'text_content' => file_get_contents($extractResult['txt_path']),
+        'text_length' => $extractResult['text_length'],
+        'extraction_method' => $extractResult['extraction_method'],
+        'success_level' => $extractResult['success'] ? 'full' : 'partial',
         'timestamp' => date('Y-m-d H:i:s')
     ];
     
-    // Agregar información de debug si está habilitada
-    if (apio_should_show_debug('show_headers') || apio_should_show_debug('show_body')) {
-        $response['debug_info'] = [];
-        
-        if (apio_should_show_debug('show_preflight')) {
-            $response['debug_info']['preflight'] = [
+    // Debug info simplificado
+    if (apio_should_show_debug('show_preflight')) {
+        $response['debug_info'] = [
+            'preflight' => [
                 'pdf_exists' => true,
                 'pdf_size' => filesize($pdfPath),
-                'prompt_ready' => true
-            ];
-        }
-        
-        if (apio_should_show_debug('show_model_info')) {
-            $response['debug_info']['model_info'] = [
-                'model' => $model,
-                'temperature' => $temperature,
-                'max_tokens' => $maxTokens,
-                'top_p' => $topP
-            ];
-        }
-        
-        if (apio_should_show_debug('show_prompt')) {
-            $response['debug_info']['prompt'] = $prompt;
-        }
-        
-        if (apio_should_show_debug('show_headers')) {
-            $response['debug_info']['request_headers'] = $result['debug_info']['request_headers'] ?? [];
-        }
-        
-        if (apio_should_show_debug('show_body')) {
-            $response['debug_info']['request_payload'] = $result['debug_info']['request_payload'] ?? [];
-            $response['debug_info']['response_body'] = $result['raw_response'] ?? [];
-        }
+                'extraction_attempted' => true
+            ],
+            'extraction' => [
+                'method' => $extractResult['extraction_method'],
+                'success' => $extractResult['success'],
+                'txt_created' => file_exists($extractResult['txt_path'])
+            ]
+        ];
     }
     
     echo json_encode($response, JSON_UNESCAPED_UNICODE);

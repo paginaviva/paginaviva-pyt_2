@@ -125,11 +125,20 @@ function apio_log_event($docBasename, $phase, $event, $message, $data = null) {
     
     $logPath = $docsDir . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.log';
     
-    // Crear directorio si no existe
+    // Crear directorio automáticamente si no existe
     $logDir = dirname($logPath);
     if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
+        if (!mkdir($logDir, 0755, true)) {
+            return false; // Error al crear directorio
+        }
     }
+    
+    // Verificar permisos con prueba real de escritura (más confiable que is_writable en hosting compartido)
+    $testFile = $logDir . DIRECTORY_SEPARATOR . '.write_test';
+    if (@file_put_contents($testFile, 'test') === false) {
+        return false; // Sin permisos de escritura
+    }
+    @unlink($testFile);
     
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[$timestamp] [$phase] [$event] $message";
