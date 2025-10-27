@@ -8,27 +8,6 @@
 require_once __DIR__ . '/lib_apio.php';
 $cfg = apio_load_config();
 
-// Construye una URL pública a partir de una ruta web (por ejemplo '/code/php/login.php')
-// - si recibe una URL completa (http://...) la devuelve tal cual
-// - si recibe una ruta con leading slash, la concatena con public_base si existe
-function apio_public_from_cfg_path($webPath) {
-    $cfg = apio_load_config();
-    $publicBase = rtrim($cfg['public_base'] ?? '', '/');
-
-    if (!$webPath) return $publicBase ?: '/';
-
-    if (preg_match('#^https?://#i', $webPath) || preg_match('#^//#', $webPath)) {
-        return $webPath;
-    }
-
-    if ($webPath[0] === '/') {
-        return $publicBase ? ($publicBase . $webPath) : $webPath;
-    }
-
-    $rel = '/' . ltrim($webPath, "/\\");
-    return $publicBase ? ($publicBase . $rel) : $rel;
-}
-
 // Asset URLs
 $css_path  = $cfg['css_path']  ?? '/css/styles.css';
 $logo_path = $cfg['logo_path'] ?? '/css/BeeViva_Logo_Colour.avif';
