@@ -455,6 +455,18 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                 <div id="resultsText" class="results-text">
                     <!-- Se llena dinámicamente -->
                 </div>
+                
+                <!-- Sección Fase 2A -->
+                <div class="phase2a-section" style="margin-top: 20px; padding: 15px; background: #e8f5e8; border: 2px solid #28a745; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
+                    <p>El texto se ha extraído y guardado correctamente. Puedes continuar con la siguiente fase del procesamiento.</p>
+                    <button id="continuePhase2Btn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
+                        ⏭️ Continuar a Fase 2A
+                    </button>
+                    <button id="viewFilesBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                        📁 Ver Archivos Generados
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -535,6 +547,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                 
                 const payload = {
                     pdf_url: pdfUrl,
+                    doc_basename: CURRENT_DOC, // Agregar NB del archivo
                     model: formData.get('model'),
                     temperature: parseFloat(formData.get('temperature')),
                     max_tokens: parseInt(formData.get('max_tokens')),
@@ -635,11 +648,49 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             debugPanel.style.display = 'block';
         }
         
+        function continueToPhase2A() {
+            if (!CURRENT_DOC) {
+                alert('No hay documento procesado para continuar');
+                return;
+            }
+            
+            // Construir URL de Fase 2A con parámetro del documento
+            const phase2Url = `/code/php/phase_2a.php?doc=${encodeURIComponent(CURRENT_DOC)}`;
+            
+            // Confirmar navegación
+            if (confirm(`¿Continuar a la Fase 2A con el documento "${CURRENT_DOC}"?`)) {
+                window.location.href = phase2Url;
+            }
+        }
+        
+        function viewGeneratedFiles() {
+            if (!CURRENT_DOC) {
+                alert('No hay documento seleccionado');
+                return;
+            }
+            
+            // Abrir lista de documentos filtrada o navegar a docs_list
+            const docsListUrl = `/code/php/docs_list.php#${encodeURIComponent(CURRENT_DOC)}`;
+            window.open(docsListUrl, '_blank');
+        }
+        
         function showResults(text) {
             // Remover BOM si existe
             extractedText = text.replace(/^\uFEFF/, '');
             resultsText.textContent = extractedText;
             resultsPanel.style.display = 'block';
+            
+            // Configurar eventos de los nuevos botones
+            const continueBtn = document.getElementById('continuePhase2Btn');
+            const viewFilesBtn = document.getElementById('viewFilesBtn');
+            
+            if (continueBtn) {
+                continueBtn.onclick = continueToPhase2A;
+            }
+            
+            if (viewFilesBtn) {
+                viewFilesBtn.onclick = viewGeneratedFiles;
+            }
         }
         
         function togglePanel(panel) {

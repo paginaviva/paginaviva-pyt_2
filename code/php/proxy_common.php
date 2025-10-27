@@ -19,10 +19,14 @@ final class ProxyRuntime
 
     public function __construct()
     {
-        $this->apiKey = getenv('OPENAI_API_KEY') ?: '';
+        // Cargar API key desde config.json directamente
+        require_once __DIR__ . '/lib_apio.php';
+        $cfg = apio_load_config();
+        $this->apiKey = $cfg['apio_key'] ?? '';
+        
         $this->mark('init');
         if ($this->apiKey === '') {
-            $this->fail(500, 'Falta OPENAI_API_KEY en el entorno.');
+            $this->fail(500, 'Falta apio_key en config.json.');
         }
     }
 
@@ -162,6 +166,45 @@ final class ProxyRuntime
         return $id;
     }
 
+    public function openaiChatCompletions(array $payload): array
+    {
+        $this->mark('chat.completions.start');
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . $this->apiKey,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 120,
+        ]);
+        $t0 = microtime(true);
+        $resp = curl_exec($ch);
+        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $err = curl_error($ch);
+        curl_close($ch);
+        $t1 = microtime(true);
+
+        $this->debugHttp[] = [
+            'stage' => 'chat.completions',
+            'status_code' => $status,
+            'ms' => (int) round(($t1 - $t0) * 1000),
+            'headers' => ['Authorization' => 'Bearer ***', 'Content-Type' => 'application/json'],
+        ];
+
+        if ($resp === false || $status < 200 || $status >= 300) {
+            $this->fail(502, 'Fallo en Chat Completions API: ' . ($err ?: ('HTTP ' . $status . ' ' . $resp)));
+        }
+        $j = json_decode($resp, true);
+        if (!is_array($j)) {
+            $this->fail(502, 'Chat Completions API devolvió un cuerpo no JSON.');
+        }
+        $this->mark('chat.completions.done');
+        return $j;
+    }
+
     public function openaiResponses(array $payload): array
     {
         $this->mark('responses.create.start');
@@ -203,10 +246,31 @@ final class ProxyRuntime
 
     public function extractOutputText(array $res): string
     {
+        // Debug: guardar respuesta completa para análisis
+        $this->debugHttp[] = [
+            'stage' => 'extract_text_debug',
+            'status_code' => 200,
+            'headers' => ['debug' => 'response_structure'],
+            'response_keys' => array_keys($res),
+            'response_structure' => [
+                'has_choices' => isset($res['choices']),
+                'choices_count' => isset($res['choices']) ? count($res['choices']) : 0,
+                'has_output_text' => isset($res['output_text']),
+                'has_output' => isset($res['output']),
+                'has_content' => isset($res['content']),
+                'has_text' => isset($res['text'])
+            ],
+            'full_response_sample' => json_encode($res, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+        ];
+        
+        // Método 1: Campo directo output_text
         $txt = $res['output_text'] ?? '';
         if ($txt !== '') {
+            $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'output_text', 'found' => true];
             return (string) $txt;
         }
+        
+        // Método 2: Estructura output[].content[].text
         if (isset($res['output']) && is_array($res['output'])) {
             $buf = '';
             foreach ($res['output'] as $blk) {
@@ -218,8 +282,36 @@ final class ProxyRuntime
                     }
                 }
             }
-            return $buf;
+            if ($buf !== '') {
+                $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'output_array', 'found' => true];
+                return $buf;
+            }
         }
+        
+        // Método 3: Estructura choices[].message.content (Chat Completions style)
+        if (isset($res['choices']) && is_array($res['choices'])) {
+            foreach ($res['choices'] as $choice) {
+                $content = $choice['message']['content'] ?? $choice['text'] ?? '';
+                if ($content !== '') {
+                    $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'choices_content', 'found' => true, 'content_length' => strlen($content)];
+                    return (string) $content;
+                }
+            }
+        }
+        
+        // Método 4: Campo directo content
+        if (isset($res['content']) && is_string($res['content'])) {
+            $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'direct_content', 'found' => true];
+            return $res['content'];
+        }
+        
+        // Método 5: Campo text directo
+        if (isset($res['text']) && is_string($res['text'])) {
+            $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'direct_text', 'found' => true];
+            return $res['text'];
+        }
+        
+        $this->debugHttp[] = ['stage' => 'extract_method', 'method' => 'none', 'found' => false];
         return '';
     }
 
