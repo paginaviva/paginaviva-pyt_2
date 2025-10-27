@@ -32,6 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
     statusBox.innerHTML = '<div class="status-icon">✔</div>'
       + '<div>Subida correcta: <span style="font-weight:700;">' + escapeHtml(filename) + '</span> (' + kb + ' KB) ' 
       + (message ? '<div style="margin-top:6px;color:#1b6b2d;">' + escapeHtml(message) + '</div>' : '') + '</div>';
+    
+    // Mostrar sección Fase 1B y configurar botón
+    const phase1bSection = document.getElementById('phase1bSection');
+    const generateTxtBtn = document.getElementById('generateTxtBtn');
+    
+    if (phase1bSection && generateTxtBtn) {
+      phase1bSection.style.display = 'block';
+      
+      // Extraer nombre base del archivo (sin extensión)
+      const baseName = filename.replace(/\.[^/.]+$/, "");
+      
+      // Configurar evento del botón
+      generateTxtBtn.onclick = function() {
+        const phase1bUrl = '/code/php/phase_1b.php?doc=' + encodeURIComponent(baseName);
+        window.location.href = phase1bUrl;
+      };
+    }
   }
 
   function showError(msg) {

@@ -13,24 +13,8 @@ if (empty($_SESSION['user'])) {
 require_once __DIR__ . '/lib_apio.php';
 $cfg = apio_load_config();
 
-// Función para construir URLs públicas (duplicada de header.php temporalmente)
-function apio_public_from_cfg_path($webPath) {
-    $cfg = apio_load_config();
-    $publicBase = rtrim($cfg['public_base'] ?? '', '/');
-
-    if (!$webPath) return $publicBase ?: '/';
-
-    if (preg_match('#^https?://#i', $webPath) || preg_match('#^//#', $webPath)) {
-        return $webPath;
-    }
-
-    if ($webPath[0] === '/') {
-        return $publicBase ? ($publicBase . $webPath) : $webPath;
-    }
-
-    $rel = '/' . ltrim($webPath, "/\\");
-    return $publicBase ? ($publicBase . $rel) : $rel;
-}
+// Obtener documento pre-seleccionado desde URL
+$preSelectedDoc = isset($_GET['doc']) ? trim($_GET['doc']) : '';
 
 // Obtener lista de documentos disponibles (directorios en docs_dir que contengan .pdf)
 $docsDir = $cfg['docs_dir'] ?? '';
@@ -89,7 +73,8 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                         <?php foreach ($availableDocs as $doc): ?>
                             <option value="<?php echo htmlspecialchars($doc['basename']); ?>" 
                                     data-size="<?php echo $doc['pdf_size']; ?>" 
-                                    data-has-txt="<?php echo $doc['has_txt'] ? 'true' : 'false'; ?>">
+                                    data-has-txt="<?php echo $doc['has_txt'] ? 'true' : 'false'; ?>"
+                                    <?php echo ($doc['basename'] === $preSelectedDoc) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($doc['basename']); ?> 
                                 (<?php echo round($doc['pdf_size'] / 1024); ?> KB)
                                 <?php if ($doc['has_txt']): ?>
@@ -430,6 +415,11 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         function initializePhase1B() {
             loadApioParams();
             setupEventListeners();
+            
+            // Si hay documento pre-seleccionado, activar automáticamente
+            if (docSelect.value) {
+                onDocumentChange();
+            }
         }
         
         function loadApioParams() {

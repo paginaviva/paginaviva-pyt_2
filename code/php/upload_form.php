@@ -78,6 +78,15 @@ $uploadJs = $pb ? $pb . '/code/js/upload.js' : '/code/js/upload.js';
       <!-- populated by JS -->
     </div>
 
+    <!-- Botón Fase 1B (solo aparece después de subida exitosa) -->
+    <div id="phase1bSection" style="display: none; margin-top: 20px; padding: 15px; background: #f0f8ff; border: 2px solid #007cba; border-radius: 8px;">
+      <h3 style="margin-top: 0; color: #007cba;">🤖 Procesar con IA (Fase 1B)</h3>
+      <p>El PDF se ha subido correctamente. Ahora puedes procesarlo con Inteligencia Artificial para extraer el texto.</p>
+      <button id="generateTxtBtn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+        ✨ Generar .TXT (F1B)
+      </button>
+    </div>
+
     <p class="note">Nota: el fichero se envía en una única petición al servidor.</p>
   </div>
 

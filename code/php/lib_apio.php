@@ -299,4 +299,27 @@ function apio_call_openai($docBasename, $prompt, $params = []) {
         ]
     ];
 }
+
+/**
+ * Construir URL pública a partir de una ruta web
+ * @param string $webPath - Ruta web (ej: '/code/php/login.php')
+ * @return string URL pública completa
+ */
+function apio_public_from_cfg_path($webPath) {
+    $cfg = apio_load_config();
+    $publicBase = rtrim($cfg['public_base'] ?? '', '/');
+
+    if (!$webPath) return $publicBase ?: '/';
+
+    if (preg_match('#^https?://#i', $webPath) || preg_match('#^//#', $webPath)) {
+        return $webPath;
+    }
+
+    if ($webPath[0] === '/') {
+        return $publicBase ? ($publicBase . $webPath) : $webPath;
+    }
+
+    $rel = '/' . ltrim($webPath, "/\\");
+    return $publicBase ? ($publicBase . $rel) : $rel;
+}
 ?>
