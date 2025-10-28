@@ -114,4 +114,74 @@ PROMPT
     ]
 ];
 
+/**
+ * Prompt p_expand_metadata_technical (fase 2B)
+ */
+$PROMPTS[2]['p_expand_metadata_technical'] = [
+    'id' => 'p_expand_metadata_technical',
+    'title' => 'Ampliar metadatos técnicos (p_expand_metadata_technical)',
+    'prompt' => <<<'PROMPT'
+OBJECTIVE:
+Use the content of the document associated with the provided file_id to expand the JSON received from the previous block with additional, verified technical information.
+
+INSTRUCTIONS:
+1. Use exclusively the content accessible through the specified file_id: {FILE_ID}.
+2. The JSON data generated in the previous block is:
+   {JSON_PREVIO}
+   - Do not delete or rename any of its keys.
+   - Add only the new keys listed below.
+3. Analyse the full text of the document (content available within the files linked to the assistant_id).
+4. Extract the requested information, writing it in a technical and precise manner, without inventing or filling in missing data.
+5. Add the following fields to the received JSON:
+   - normas_detectadas: list of technical standards mentioned (for example, EN 54-2, UNE 23007-14, etc.).
+     Each element must be an object with the following keys:
+     {
+       "nombre": "",
+       "referencia": "",
+       "informacion_complementaria": ""
+     }
+   - certificaciones_detectadas: list of certifications or approvals (AENOR, CE, LPCB, etc.), using the same structure as above.
+   - manuales_relacionados: list of manuals detected or referenced in the document, including name, reference, and, where applicable, complementary information.
+   - otros_productos_relacionados: list of other Cofem products mentioned in the document, including name, reference, and complementary information where applicable.
+   - accesorios_relacionados: list of accessories identified or referenced in the document, including name, reference, and complementary information where applicable.
+   - uso_formacion_tecnicos: boolean value (true/false) indicating whether the document's content is applicable or useful for technician training.
+     If the value is true, also add the key:
+     "razon_uso_formacion" with a brief and technical explanation of why the document can be used for training purposes.
+6. If any of the above fields are not present or cannot be identified in the document:
+   - Assign an empty list [] to list-type fields.
+   - Assign false to uso_formacion_tecnicos and an empty string "" to razon_uso_formacion.
+7. Maintain key naming in snake_case (all lowercase, using underscores).
+8. Do not modify or delete any existing field from the received JSON.
+9. The final response must consist only of the complete JSON object, containing all original and newly added fields, without any text or comments outside the JSON.
+
+MANDATORY OUTPUT SCHEMA:
+{
+  "file_id": "",
+  "nombre_archivo": "",
+  "nombre_producto": "",
+  "codigo_referencia_cofem": "",
+  "tipo_documento": "",
+  "tipo_informacion_contenida": "",
+  "fecha_emision_revision": "",
+  "idiomas_presentes": [],
+  "normas_detectadas": [
+    {
+      "nombre": "",
+      "referencia": "",
+      "informacion_complementaria": ""
+    }
+  ],
+  "certificaciones_detectadas": [],
+  "manuales_relacionados": [],
+  "otros_productos_relacionados": [],
+  "accesorios_relacionados": [],
+  "uso_formacion_tecnicos": false,
+  "razon_uso_formacion": ""
+}
+PROMPT
+    ,
+    'placeholders' => ['FILE_ID', 'JSON_PREVIO'],
+    'output_format' => 'json'
+];
+
 // Puedes añadir aquí más plantillas por fase (3..10) siguiendo la estructura.
