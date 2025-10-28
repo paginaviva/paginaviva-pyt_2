@@ -123,6 +123,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             border-radius: 3px;
             background: #e9ecef;
             outline: none;
+            appearance: none;
             -webkit-appearance: none;
         }
         

@@ -99,21 +99,8 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
         resError('No se pudo guardar el fichero en el servidor.', 500);
     }
 
-    // Procesado posterior (opcional)
+    // El procesamiento se realiza en las fases (F1B, F1C, etc.)
     $processResult = null;
-    $processFile = __DIR__ . '/process_pdf.php';
-    if (is_file($processFile)) {
-        try {
-            require_once $processFile;
-            if (function_exists('process_uploaded_pdf')) {
-                $processResult = process_uploaded_pdf($destPath);
-            } else {
-                $processResult = ['ok' => false, 'error' => 'Function process_uploaded_pdf not found'];
-            }
-        } catch (Throwable $e) {
-            $processResult = ['ok' => false, 'error' => $e->getMessage()];
-        }
-    }
 
     // Devolver ruta relativa pública si es posible (usar public_base + path relative to doc root)
     $publicBase = rtrim($config['public_base'] ?? '', '/');

@@ -20,7 +20,7 @@ if (!$docBasename) {
 }
 
 // Verificar que existe el archivo .txt de F1B
-$txtFile = $cfg['docs_dir'] . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '_1B.txt';
+$txtFile = $cfg['docs_dir'] . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.txt';
 if (!file_exists($txtFile)) {
     die('Error: Debe completar la Fase 1B primero. No se encontró el archivo de texto extraído.');
 }

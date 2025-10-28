@@ -172,11 +172,11 @@ class Phase1CProxy
         }
         
         // Guardar file_id en un archivo .fileid
-        $fileIdPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_1C.fileid';
+        $fileIdPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '.fileid';
         file_put_contents($fileIdPath, $fileId);
         
         // Guardar log completo
-        $logPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_1C.log';
+        $logPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '.log';
         $logData = [
             'timestamp' => date('Y-m-d H:i:s'),
             'phase' => '1C',
@@ -196,7 +196,7 @@ class Phase1CProxy
     private function getTxtFilePath(): string
     {
         $docsDir = $this->config['docs_dir'] ?? '';
-        return $docsDir . DIRECTORY_SEPARATOR . $this->docBasename . DIRECTORY_SEPARATOR . $this->docBasename . '_1B.txt';
+        return $docsDir . DIRECTORY_SEPARATOR . $this->docBasename . DIRECTORY_SEPARATOR . $this->docBasename . '.txt';
     }
     
     private function getFilePaths(): array
@@ -205,8 +205,8 @@ class Phase1CProxy
         $docDir = $docsDir . DIRECTORY_SEPARATOR . $this->docBasename;
         
         return [
-            'fileid_file' => $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_1C.fileid',
-            'log_file' => $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_1C.log'
+            'fileid_file' => $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '.fileid',
+            'log_file' => $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '.log'
         ];
     }
     
