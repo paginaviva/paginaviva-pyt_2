@@ -48,16 +48,16 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
                 $msg = 'Subida parcial.';
                 break;
             case UPLOAD_ERR_NO_FILE:
-                $msg = 'No se ha enviado ningún fichero.';
+                $msg = 'No se ha enviado ningï¿½n fichero.';
                 break;
         }
         resError($msg);
     }
 
-    // Tamaño máximo (configurable)
+    // Tamaï¿½o mï¿½ximo (configurable)
     $filesize = filesize($file['tmp_name']);
     if ($filesize > $maxDoc) {
-        resError('El documento excede el tamaño máximo permitido.', 413);
+        resError('El documento excede el tamaï¿½o mï¿½ximo permitido.', 413);
     }
 
     // Obtener doc_basename (POST 'doc_basename' -> 'filename' -> derived from file name)
@@ -70,11 +70,17 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
     }
     if (!$docBasename) $docBasename = 'doc';
 
-    // Crear SDIR bajo docsDir
+    // Crear SDIR bajo docsDir - Solo si realmente no existe
     $sdir = $docsDir . DIRECTORY_SEPARATOR . $docBasename;
+    
+    // Si el directorio no existe, intentar crearlo sin permisos especÃ­ficos
     if (!is_dir($sdir)) {
-        if (!mkdir($sdir, 0755, true) && !is_dir($sdir)) {
-            resError('No se puede crear directorio del documento.', 500);
+        // Intentar crear sin especificar permisos (usa umask del servidor)
+        if (!@mkdir($sdir, 0755, true)) {
+            // Si falla, verificar si existe (por si otro proceso lo creÃ³)
+            if (!is_dir($sdir)) {
+                resError('No se puede crear directorio del documento: ' . $docBasename, 500);
+            }
         }
     }
 
@@ -84,7 +90,7 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
     $finalFilename = $docBasename . '.' . $ext;
     $destPath = $sdir . DIRECTORY_SEPARATOR . $finalFilename;
 
-    // Si existe, sobrescribir: eliminar primero (según requerimiento)
+    // Si existe, sobrescribir: eliminar primero (segï¿½n requerimiento)
     if (is_file($destPath)) {
         @unlink($destPath);
     }
@@ -93,21 +99,10 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
         resError('No se pudo guardar el fichero en el servidor.', 500);
     }
 
-    // Procesado posterior (opcional)
+    // El procesamiento se realiza en las fases (F1B, F1C, etc.)
     $processResult = null;
-    $processFile = __DIR__ . '/process_pdf.php';
-    if (is_file($processFile)) {
-        try {
-            require_once $processFile;
-            if (function_exists('process_uploaded_pdf')) {
-                $processResult = process_uploaded_pdf($destPath);
-            }
-        } catch (Throwable $e) {
-            $processResult = ['ok' => false, 'error' => $e->getMessage()];
-        }
-    }
 
-    // Devolver ruta relativa pública si es posible (usar public_base + path relative to doc root)
+    // Devolver ruta relativa pÃºblica si es posible (usar public_base + path relative to doc root)
     $publicBase = rtrim($config['public_base'] ?? '', '/');
     $relativePath = str_replace(rtrim($config['project_root'], "/\\"), '', $destPath);
     $relativePath = ltrim(str_replace(DIRECTORY_SEPARATOR, '/', $relativePath), '/');
@@ -131,12 +126,14 @@ if (isset($_POST['uploadId']) || isset($_POST['chunkIndex']) || isset($_POST['to
     }
 
     if (!isset($_FILES['file']) || !is_uploaded_file($_FILES['file']['tmp_name'])) {
-        resError('No se recibió el chunk (archivo).', 400);
+        resError('No se recibiï¿½ el chunk (archivo).', 400);
     }
 
     $targetDir = $tmpDir . DIRECTORY_SEPARATOR . $uploadId;
-    if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
-        resError('No se puede crear directorio temporal para chunks.', 500);
+    if (!is_dir($targetDir)) {
+        if (!@mkdir($targetDir, 0755, true) && !is_dir($targetDir)) {
+            resError('No se puede crear directorio temporal para chunks.', 500);
+        }
     }
 
     $partName = sprintf('%05d.part', $chunkIndex);
@@ -150,8 +147,10 @@ if (isset($_POST['uploadId']) || isset($_POST['chunkIndex']) || isset($_POST['to
     if (count($received) === $totalChunks) {
         $origName = isset($_POST['filename']) ? apio_safe_basename($_POST['filename']) : ('file_' . $uploadId);
         $sdir = $docsDir . DIRECTORY_SEPARATOR . $origName;
-        if (!is_dir($sdir) && !mkdir($sdir, 0755, true)) {
-            resError('No se puede crear directorio final para ensamblar.', 500);
+        if (!is_dir($sdir)) {
+            if (!@mkdir($sdir, 0755, true) && !is_dir($sdir)) {
+                resError('No se puede crear directorio final para ensamblar.', 500);
+            }
         }
         $finalPath = $sdir . DIRECTORY_SEPARATOR . $origName . '.pdf';
         if (is_file($finalPath)) {
@@ -201,5 +200,5 @@ if (isset($_POST['uploadId']) || isset($_POST['chunkIndex']) || isset($_POST['to
     resOk(['receivedChunk' => $chunkIndex, 'totalChunks' => $totalChunks]);
 }
 
-resError('No se recibió ningún fichero válido ni metadata de chunk.', 400);
+resError('No se recibiï¿½ ningï¿½n fichero vï¿½lido ni metadata de chunk.', 400);
 ?>

@@ -125,11 +125,20 @@ function apio_log_event($docBasename, $phase, $event, $message, $data = null) {
     
     $logPath = $docsDir . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.log';
     
-    // Crear directorio si no existe
+    // Crear directorio automáticamente si no existe
     $logDir = dirname($logPath);
     if (!is_dir($logDir)) {
-        mkdir($logDir, 0755, true);
+        if (!mkdir($logDir, 0755, true)) {
+            return false; // Error al crear directorio
+        }
     }
+    
+    // Verificar permisos con prueba real de escritura (más confiable que is_writable en hosting compartido)
+    $testFile = $logDir . DIRECTORY_SEPARATOR . '.write_test';
+    if (@file_put_contents($testFile, 'test') === false) {
+        return false; // Sin permisos de escritura
+    }
+    @unlink($testFile);
     
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "[$timestamp] [$phase] [$event] $message";
@@ -206,8 +215,8 @@ function apio_call_openai($docBasename, $prompt, $params = []) {
     $apiKey = $cfg['apio_key'] ?? '';
     $apiUrl = $cfg['apio_url'] ?? 'https://api.openai.com/v1/chat/completions';
     
-    if (!$apiKey) {
-        return apio_log_error($docBasename, '1B', 'API key no configurada');
+    if (!$apiKey || $apiKey === 'TU_API_KEY_REAL_AQUI' || $apiKey === '12345') {
+        return apio_log_error($docBasename, '1B', 'API key no configurada o inválida. Configura una API key válida de OpenAI en config.json');
     }
     
     // Combinar parámetros

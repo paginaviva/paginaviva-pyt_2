@@ -1,6 +1,6 @@
 <?php
-// phase_1b.php - Interfaz Fase 1B: Procesar PDF en OpenAI
-// Form con parámetros APIO configurables, panel debug expandible, resultados
+// phase1b.php - Nueva UI Fase 1B: Procesar PDF con Sistema Proxy
+// Interfaz moderna con debug en tiempo real usando proxy_common.php
 
 session_start();
 
@@ -16,7 +16,7 @@ $cfg = apio_load_config();
 // Obtener documento pre-seleccionado desde URL
 $preSelectedDoc = isset($_GET['doc']) ? trim($_GET['doc']) : '';
 
-// Obtener lista de documentos disponibles (directorios en docs_dir que contengan .pdf)
+// Obtener lista de documentos disponibles
 $docsDir = $cfg['docs_dir'] ?? '';
 $availableDocs = [];
 
@@ -41,254 +41,275 @@ if (is_dir($docsDir)) {
     }
 }
 
-// URLs dinámicas
-$processUrl = apio_public_from_cfg_path('/code/php/process_1b.php');
+// URLs del sistema proxy
+$proxyUrl = apio_public_from_cfg_path('/code/php/phase1b_proxy.php');
 
 // Configuración APIO
-$apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-5-mini'];
+$apioModels = $cfg['apio_models'] ?? ['gpt-5-mini', 'gpt-5', 'gpt-4o', 'gpt-4o-mini'];
 $apioDefaults = $cfg['apio_defaults'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
-    <title>Fase 1B - Procesar PDF en OpenAI - BeeVIVA</title>
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
-    <?php require_once __DIR__ . '/header.php'; ?>
-    
-    <div class="container">
-        <h2>🤖 Fase 1B — Procesar PDF en OpenAI</h2>
-        <p>Selecciona un documento subido en la Fase 1A y configura los parámetros para extraer texto usando IA.</p>
-        
-        <!-- Formulario Principal -->
-        <div class="form-section">
-            <form id="phase1bForm">
-                <!-- Selección de Documento -->
-                <div class="field-group">
-                    <label for="docSelect"><strong>Documento a procesar:</strong></label>
-                    <select id="docSelect" name="doc_basename" required>
-                        <option value="">— Seleccionar documento —</option>
-                        <?php foreach ($availableDocs as $doc): ?>
-                            <option value="<?php echo htmlspecialchars($doc['basename']); ?>" 
-                                    data-size="<?php echo $doc['pdf_size']; ?>" 
-                                    data-has-txt="<?php echo $doc['has_txt'] ? 'true' : 'false'; ?>"
-                                    <?php echo ($doc['basename'] === $preSelectedDoc) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($doc['basename']); ?> 
-                                (<?php echo round($doc['pdf_size'] / 1024); ?> KB)
-                                <?php if ($doc['has_txt']): ?>
-                                    ✅ Procesado
-                                <?php endif; ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div id="docInfo" class="doc-info" style="display: none;"></div>
-                </div>
-                
-                <!-- Parámetros APIO -->
-                <fieldset class="apio-params">
-                    <legend>⚙️ Parámetros OpenAI API</legend>
-                    
-                    <div class="field-row">
-                        <div class="field-group">
-                            <label for="model">Modelo:</label>
-                            <select id="model" name="model">
-                                <?php foreach ($apioModels as $model): ?>
-                                    <option value="<?php echo htmlspecialchars($model); ?>" 
-                                            <?php echo $model === ($apioDefaults['model'] ?? 'gpt-5-mini') ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($model); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        
-                        <div class="field-group">
-                            <label for="temperature">Temperatura:</label>
-                            <input type="range" id="temperature" name="temperature" 
-                                   min="0" max="1" step="0.1" 
-                                   value="<?php echo $apioDefaults['temperature'] ?? 0.2; ?>">
-                            <span id="tempValue"><?php echo $apioDefaults['temperature'] ?? 0.2; ?></span>
-                        </div>
-                    </div>
-                    
-                    <div class="field-row">
-                        <div class="field-group">
-                            <label for="maxTokens">Máx. Tokens:</label>
-                            <input type="number" id="maxTokens" name="max_tokens" 
-                                   min="100" max="4000" step="100"
-                                   value="<?php echo $apioDefaults['max_tokens'] ?? 1500; ?>">
-                        </div>
-                        
-                        <div class="field-group">
-                            <label for="topP">Top P:</label>
-                            <input type="range" id="topP" name="top_p" 
-                                   min="0.1" max="1" step="0.1"
-                                   value="<?php echo $apioDefaults['top_p'] ?? 1.0; ?>">
-                            <span id="topPValue"><?php echo $apioDefaults['top_p'] ?? 1.0; ?></span>
-                        </div>
-                    </div>
-                </fieldset>
-                
-                <!-- Botón de Acción -->
-                <div class="action-section">
-                    <button type="submit" id="processBtn" class="btn btn-primary" disabled>
-                        🚀 Procesar con OpenAI
-                    </button>
-                    <div id="statusIndicator" class="status-indicator"></div>
-                </div>
-            </form>
-        </div>
-        
-        <!-- Panel de Debug (Expandible) -->
-        <div id="debugPanel" class="debug-panel" style="display: none;">
-            <h3>🔍 Información de Debug</h3>
-            
-            <div class="debug-section" id="preflightSection" style="display: none;">
-                <h4>✅ Pre-flight Checks</h4>
-                <div id="preflightContent"></div>
-            </div>
-            
-            <div class="debug-section" id="modelSection" style="display: none;">
-                <h4>🤖 Información del Modelo</h4>
-                <div id="modelContent"></div>
-            </div>
-            
-            <div class="debug-section" id="promptSection" style="display: none;">
-                <h4>📝 Prompt Utilizado</h4>
-                <pre id="promptContent"></pre>
-            </div>
-            
-            <div class="debug-section" id="requestSection" style="display: none;">
-                <h4>📤 Solicitud a OpenAI</h4>
-                <div class="debug-subsection">
-                    <h5>Headers:</h5>
-                    <pre id="requestHeaders"></pre>
-                </div>
-                <div class="debug-subsection">
-                    <h5>Body:</h5>
-                    <pre id="requestBody"></pre>
-                </div>
-            </div>
-            
-            <div class="debug-section" id="responseSection" style="display: none;">
-                <h4>📥 Respuesta de OpenAI</h4>
-                <pre id="responseContent"></pre>
-            </div>
-        </div>
-        
-        <!-- Resultados -->
-        <div id="resultsPanel" class="results-panel" style="display: none;">
-            <h3>📄 Resultado de la Extracción</h3>
-            
-            <div class="result-info">
-                <div id="extractionInfo"></div>
-            </div>
-            
-            <div class="extracted-text">
-                <h4>Texto Extraído:</h4>
-                <div id="extractedTextContent" class="text-content"></div>
-            </div>
-            
-            <div class="action-buttons">
-                <button id="downloadTxt" class="btn btn-secondary" style="display: none;">
-                    💾 Descargar .TXT
-                </button>
-                <button id="continuePhase2" class="btn btn-success" style="display: none;">
-                    ➡️ Continuar a Fase 2A
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- CSS Inline para la Fase 1B -->
+    <title>📄 Fase 1B — Procesar PDF en OpenAI</title>
+    <link rel="stylesheet" href="<?php echo apio_public_from_cfg_path('/css/styles.css'); ?>">
     <style>
-        .form-section {
-            background: #f8f9fa;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
+        }
+        
+        .document-info {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
             border-radius: 8px;
+            padding: 20px;
             margin-bottom: 20px;
         }
         
-        .field-group {
+        .doc-display {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .params-panel {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .param-row {
+            display: flex;
+            gap: 20px;
             margin-bottom: 15px;
+            align-items: center;
         }
         
-        .field-group label {
+        .param-group {
+            flex: 1;
+        }
+        
+        .param-group label {
             display: block;
-            font-weight: 700;
+            font-weight: bold;
             margin-bottom: 5px;
-            color: #333;
+            color: #495057;
         }
         
-        .field-group select, .field-group input {
+        .param-group select,
+        .param-group input {
             width: 100%;
             padding: 8px 12px;
-            border: 1px solid #ddd;
+            border: 1px solid #ced4da;
             border-radius: 4px;
             font-size: 14px;
         }
         
-        .field-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        .slider-container {
+            position: relative;
         }
         
-        .apio-params {
-            border: 2px solid #e1e5e9;
-            border-radius: 6px;
-            padding: 15px;
-            margin: 20px 0;
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e9ecef;
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
         }
         
-        .apio-params legend {
-            padding: 0 10px;
-            font-weight: 700;
-            color: #0b6cff;
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
         }
         
-        .action-section {
-            text-align: center;
-            margin-top: 25px;
+        .slider-value {
+            position: absolute;
+            right: 0;
+            top: -25px;
+            font-weight: bold;
+            color: #007bff;
         }
         
-        .btn {
-            padding: 12px 24px;
+        .process-btn {
+            background: #007bff;
+            color: white;
             border: none;
+            padding: 12px 24px;
             border-radius: 6px;
             font-size: 16px;
-            font-weight: 700;
+            font-weight: bold;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 20px auto;
         }
         
-        .btn-primary {
-            background: #0b6cff;
-            color: white;
-        }
-        
-        .btn-primary:disabled {
-            background: #ccc;
+        .process-btn:disabled {
+            background: #6c757d;
             cursor: not-allowed;
         }
         
-        .btn-secondary {
-            background: #6c757d;
+        .timeline-panel {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .timeline-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .timeline-content {
+            padding: 20px;
+        }
+        
+        .timeline-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .timeline-stage {
+            font-family: monospace;
+            color: #495057;
+        }
+        
+        .timeline-time {
+            font-family: monospace;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .debug-panel {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .debug-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .debug-content {
+            padding: 0;
+        }
+        
+        .debug-http {
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .debug-http-header {
+            background: #f1f3f4;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .debug-http-content {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: none;
+        }
+        
+        .debug-json {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        
+        .results-panel {
+            background: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .results-header {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px 20px;
+            border-bottom: 1px solid #c3e6cb;
+            font-weight: bold;
+        }
+        
+        .results-content {
+            padding: 20px;
+        }
+        
+        .results-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .action-btn:hover {
+            background: #007bff;
             color: white;
         }
         
-        .btn-success {
-            background: #28a745;
-            color: white;
+        .results-text {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .status-indicator {
-            margin-top: 10px;
-            padding: 10px;
+            padding: 10px 20px;
             border-radius: 4px;
+            margin-bottom: 20px;
             display: none;
+            font-weight: bold;
         }
         
         .status-success {
@@ -308,100 +329,164 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             color: #856404;
             border: 1px solid #ffeaa7;
         }
-        
-        .debug-panel {
-            background: #f1f3f4;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .debug-section {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: white;
-            border-radius: 4px;
-        }
-        
-        .debug-section h4 {
-            margin-top: 0;
-            color: #333;
-        }
-        
-        .debug-section pre {
-            background: #2d3748;
-            color: #e2e8f0;
-            padding: 12px;
-            border-radius: 4px;
-            overflow-x: auto;
-            font-size: 12px;
-            line-height: 1.4;
-        }
-        
-        .results-panel {
-            background: #f8f9fa;
-            border: 2px solid #28a745;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        
-        .text-content {
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-        
-        .action-buttons {
-            margin-top: 20px;
-            text-align: center;
-            gap: 10px;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .doc-info {
-            margin-top: 8px;
-            padding: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        @media (max-width: 768px) {
-            .field-row {
-                grid-template-columns: 1fr;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-        }
     </style>
+</head>
+<body>
+    <?php require_once __DIR__ . '/header.php'; ?>
     
-    <!-- JavaScript para la interactividad -->
+    <div class="container">
+        <h2>📄 Fase 1B &mdash; Procesar PDF en OpenAI</h2>
+        <p>Procesa el documento subido en la Fase 1A y configura los parámetros para extraer texto usando IA.</p>
+        
+        <!-- Mostrar documento a procesar -->
+        <?php if ($preSelectedDoc && !empty($availableDocs)): ?>
+            <?php 
+            $currentDoc = null;
+            foreach ($availableDocs as $doc) {
+                if ($doc['basename'] === $preSelectedDoc) {
+                    $currentDoc = $doc;
+                    break;
+                }
+            }
+            ?>
+            <?php if ($currentDoc): ?>
+                <div class="document-info">
+                    <h3>📄 Documento a procesar:</h3>
+                    <div class="doc-display">
+                        <strong><?php echo htmlspecialchars($currentDoc['basename']); ?></strong><br>
+                        📁 Tamaño: <?php echo number_format($currentDoc['pdf_size'] / 1024); ?> KB<br>
+                        ⏳ Pendiente de procesar
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+        
+        <!-- Parámetros OpenAI -->
+        <div class="params-panel">
+            <h3>⚙️ Parámetros OpenAI API</h3>
+            
+            <form id="phase1bForm">
+                <input type="hidden" name="doc_basename" value="<?php echo htmlspecialchars($preSelectedDoc); ?>">
+                
+                <div class="param-row">
+                    <div class="param-group">
+                        <label for="model">Modelo:</label>
+                        <select id="model" name="model">
+                            <?php foreach ($apioModels as $model): ?>
+                                <option value="<?php echo htmlspecialchars($model); ?>" 
+                                    <?php echo ($model === ($apioDefaults['model'] ?? '')) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($model); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    
+                    <div class="param-group">
+                        <label for="temperature">Temperatura:</label>
+                        <div class="slider-container">
+                            <input type="range" id="temperature" name="temperature" 
+                                min="0" max="2" step="0.1" 
+                                value="<?php echo $apioDefaults['temperature'] ?? 0; ?>" 
+                                class="slider">
+                            <span id="tempValue" class="slider-value"><?php echo $apioDefaults['temperature'] ?? 0; ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="param-row">
+                    <div class="param-group">
+                        <label for="maxTokens">Máx. Tokens:</label>
+                        <input type="number" id="maxTokens" name="max_tokens" 
+                            min="100" max="4000" step="100" 
+                            value="<?php echo $apioDefaults['max_tokens'] ?? 1500; ?>">
+                    </div>
+                    
+                    <div class="param-group">
+                        <label for="topP">Top P:</label>
+                        <div class="slider-container">
+                            <input type="range" id="topP" name="top_p" 
+                                min="0" max="1" step="0.1" 
+                                value="<?php echo $apioDefaults['top_p'] ?? 1.0; ?>" 
+                                class="slider">
+                            <span id="topPValue" class="slider-value"><?php echo $apioDefaults['top_p'] ?? 1.0; ?></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" id="processBtn" class="process-btn" disabled>
+                    🚀 Procesar con OpenAI
+                </button>
+            </form>
+        </div>
+        
+        <!-- Indicador de estado -->
+        <div id="statusIndicator" class="status-indicator"></div>
+        
+        <!-- Panel de Timeline -->
+        <div id="timelinePanel" class="timeline-panel">
+            <div class="timeline-header" onclick="togglePanel('timeline')">
+                ⏱️ Timeline de Ejecución
+            </div>
+            <div class="timeline-content" id="timelineContent">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+        
+        <!-- Panel de Debug HTTP -->
+        <div id="debugPanel" class="debug-panel">
+            <div class="debug-header" onclick="togglePanel('debug')">
+                🔍 Debug HTTP
+            </div>
+            <div class="debug-content" id="debugContent">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+        
+        <!-- Panel de Resultados -->
+        <div id="resultsPanel" class="results-panel">
+            <div class="results-header">
+                ✅ Extracción Completada
+            </div>
+            <div class="results-content">
+                <div class="results-actions">
+                    <button class="action-btn" onclick="copyText()">📋 Copiar</button>
+                    <button class="action-btn" onclick="downloadText()">💾 Descargar</button>
+                    <button class="action-btn" onclick="viewAsFile()">📄 TXT File</button>
+                </div>
+                <div id="resultsText" class="results-text">
+                    <!-- Se llena dinámicamente -->
+                </div>
+                
+                <!-- Sección Siguiente Fase -->
+                <div class="phase2a-section" style="margin-top: 20px; padding: 15px; background: #e8f5e8; border: 2px solid #28a745; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
+                    <p>El texto se ha extraído y guardado correctamente. Puedes continuar con la siguiente fase del procesamiento.</p>
+                    <button id="continuePhase1CBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
+                        📤 Continuar a Fase 1C (Subir a OpenAI)
+                    </button>
+                    <button id="viewFilesBtn" class="btn" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                        📁 Ver Archivos Generados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
-        // Inyectar URLs desde PHP
-        const PROCESS_URL = <?php echo json_encode($processUrl); ?>;
+        // Configuración
+        const PROXY_URL = '<?php echo $proxyUrl; ?>';
+        const CURRENT_DOC = '<?php echo htmlspecialchars($preSelectedDoc); ?>';
         
-        // Estado persistente de parámetros APIO
-        const APIO_STORAGE_KEY = 'ed_cfle_apio_params';
-        
-        // Elementos DOM
-        const docSelect = document.getElementById('docSelect');
-        const docInfo = document.getElementById('docInfo');
+        // Referencias DOM
+        const form = document.getElementById('phase1bForm');
         const processBtn = document.getElementById('processBtn');
         const statusIndicator = document.getElementById('statusIndicator');
+        const timelinePanel = document.getElementById('timelinePanel');
+        const timelineContent = document.getElementById('timelineContent');
         const debugPanel = document.getElementById('debugPanel');
+        const debugContent = document.getElementById('debugContent');
         const resultsPanel = document.getElementById('resultsPanel');
-        const form = document.getElementById('phase1bForm');
+        const resultsText = document.getElementById('resultsText');
         
         // Sliders
         const temperatureSlider = document.getElementById('temperature');
@@ -409,126 +494,82 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         const topPSlider = document.getElementById('topP');
         const topPValue = document.getElementById('topPValue');
         
-        // Inicializar
+        // Variables globales
+        let extractedText = '';
+        
+        // Inicialización
         document.addEventListener('DOMContentLoaded', initializePhase1B);
         
         function initializePhase1B() {
-            loadApioParams();
             setupEventListeners();
             
-            // Si hay documento pre-seleccionado, activar automáticamente
-            if (docSelect.value) {
-                onDocumentChange();
+            // Habilitar botón si hay documento
+            if (CURRENT_DOC && processBtn) {
+                processBtn.disabled = false;
             }
-        }
-        
-        function loadApioParams() {
-            const saved = localStorage.getItem(APIO_STORAGE_KEY);
-            if (saved) {
-                try {
-                    const params = JSON.parse(saved);
-                    
-                    if (params.model) document.getElementById('model').value = params.model;
-                    if (params.temperature !== undefined) {
-                        temperatureSlider.value = params.temperature;
-                        tempValue.textContent = params.temperature;
-                    }
-                    if (params.max_tokens !== undefined) {
-                        document.getElementById('maxTokens').value = params.max_tokens;
-                    }
-                    if (params.top_p !== undefined) {
-                        topPSlider.value = params.top_p;
-                        topPValue.textContent = params.top_p;
-                    }
-                } catch (e) {
-                    console.warn('Error cargando parámetros APIO:', e);
-                }
-            }
-        }
-        
-        function saveApioParams() {
-            const params = {
-                model: document.getElementById('model').value,
-                temperature: parseFloat(temperatureSlider.value),
-                max_tokens: parseInt(document.getElementById('maxTokens').value),
-                top_p: parseFloat(topPSlider.value)
-            };
-            
-            localStorage.setItem(APIO_STORAGE_KEY, JSON.stringify(params));
         }
         
         function setupEventListeners() {
-            // Selección de documento
-            docSelect.addEventListener('change', onDocumentChange);
-            
             // Sliders
-            temperatureSlider.addEventListener('input', (e) => {
-                tempValue.textContent = e.target.value;
-                saveApioParams();
+            temperatureSlider.addEventListener('input', function() {
+                tempValue.textContent = this.value;
             });
             
-            topPSlider.addEventListener('input', (e) => {
-                topPValue.textContent = e.target.value;
-                saveApioParams();
+            topPSlider.addEventListener('input', function() {
+                topPValue.textContent = this.value;
             });
             
-            // Otros inputs
-            document.getElementById('model').addEventListener('change', saveApioParams);
-            document.getElementById('maxTokens').addEventListener('change', saveApioParams);
-            
-            // Form submit
-            form.addEventListener('submit', onFormSubmit);
+            // Formulario
+            form.addEventListener('submit', handleSubmit);
         }
         
-        function onDocumentChange() {
-            const selected = docSelect.selectedOptions[0];
+        async function handleSubmit(event) {
+            event.preventDefault();
             
-            if (!selected || !selected.value) {
-                docInfo.style.display = 'none';
-                processBtn.disabled = true;
+            if (!CURRENT_DOC) {
+                alert('No hay documento seleccionado');
                 return;
             }
             
-            const basename = selected.value;
-            const size = parseInt(selected.dataset.size);
-            const hasTxt = selected.dataset.hasTxt === 'true';
-            
-            docInfo.innerHTML = `
-                <strong>${basename}</strong><br>
-                📁 Tamaño: ${Math.round(size / 1024)} KB<br>
-                ${hasTxt ? '✅ Ya procesado anteriormente' : '🔄 Pendiente de procesar'}
-            `;
-            docInfo.style.display = 'block';
-            
-            processBtn.disabled = false;
-            processBtn.textContent = hasTxt ? '🔄 Re-procesar con OpenAI' : '🚀 Procesar con OpenAI';
-        }
-        
-        async function onFormSubmit(e) {
-            e.preventDefault();
-            
-            showStatus('Iniciando procesamiento...', 'processing');
             processBtn.disabled = true;
+            showStatus('🔄 Procesando documento...', 'processing');
             
-            // Guardar parámetros
-            saveApioParams();
-            
-            // Preparar datos
-            const formData = new FormData(form);
+            // Ocultar paneles anteriores
+            timelinePanel.style.display = 'none';
+            debugPanel.style.display = 'none';
+            resultsPanel.style.display = 'none';
             
             try {
-                const response = await fetch(PROCESS_URL, {
+                // Preparar datos
+                const formData = new FormData(form);
+                
+                // Construir URL del PDF
+                const pdfUrl = `<?php echo apio_public_from_cfg_path('/docs/'); ?>${CURRENT_DOC}/${CURRENT_DOC}.pdf`;
+                
+                const payload = {
+                    pdf_url: pdfUrl,
+                    doc_basename: CURRENT_DOC, // Agregar NB del archivo
+                    model: formData.get('model'),
+                    temperature: parseFloat(formData.get('temperature')),
+                    max_tokens: parseInt(formData.get('max_tokens')),
+                    top_p: parseFloat(formData.get('top_p'))
+                };
+                
+                // Llamada al proxy
+                const response = await fetch(PROXY_URL, {
                     method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
                 });
                 
                 const result = await response.json();
                 
-                if (result.ok) {
+                if (response.ok && result.output) {
                     handleSuccess(result);
                 } else {
-                    handleError(result.error || 'Error desconocido');
+                    handleError(result.debug?.error || 'Error desconocido');
                 }
                 
             } catch (error) {
@@ -541,13 +582,20 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         function handleSuccess(result) {
             showStatus('✅ Extracción completada exitosamente', 'success');
             
-            // Mostrar debug si disponible
-            if (result.debug_info) {
-                showDebugInfo(result.debug_info);
+            // Mostrar timeline
+            if (result.timeline) {
+                showTimeline(result.timeline);
+            }
+            
+            // Mostrar debug HTTP
+            if (result.debug?.http) {
+                showDebugHttp(result.debug.http);
             }
             
             // Mostrar resultados
-            showResults(result);
+            if (result.output?.tex) {
+                showResults(result.output.tex);
+            }
         }
         
         function handleError(error) {
@@ -560,88 +608,125 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             statusIndicator.style.display = 'block';
         }
         
-        function showDebugInfo(debugInfo) {
+        function showTimeline(timeline) {
+            timelineContent.innerHTML = '';
+            
+            timeline.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'timeline-item';
+                div.innerHTML = `
+                    <span class="timeline-stage">${item.stage}</span>
+                    <span class="timeline-time">${new Date(item.ts).toLocaleTimeString()}</span>
+                `;
+                timelineContent.appendChild(div);
+            });
+            
+            timelinePanel.style.display = 'block';
+        }
+        
+        function showDebugHttp(httpDebug) {
+            debugContent.innerHTML = '';
+            
+            httpDebug.forEach((req, index) => {
+                const div = document.createElement('div');
+                div.className = 'debug-http';
+                
+                const header = document.createElement('div');
+                header.className = 'debug-http-header';
+                header.textContent = `${req.stage} - ${req.status_code} (${req.ms || 0}ms)`;
+                header.onclick = () => toggleHttpDetail(index);
+                
+                const content = document.createElement('div');
+                content.className = 'debug-http-content';
+                content.id = `debug-http-${index}`;
+                content.innerHTML = `<div class="debug-json">${JSON.stringify(req, null, 2)}</div>`;
+                
+                div.appendChild(header);
+                div.appendChild(content);
+                debugContent.appendChild(div);
+            });
+            
             debugPanel.style.display = 'block';
-            
-            if (debugInfo.preflight) {
-                document.getElementById('preflightSection').style.display = 'block';
-                document.getElementById('preflightContent').innerHTML = `
-                    ✅ PDF existe: ${debugInfo.preflight.pdf_exists ? 'Sí' : 'No'}<br>
-                    📏 Tamaño PDF: ${Math.round(debugInfo.preflight.pdf_size / 1024)} KB<br>
-                    📝 Prompt listo: ${debugInfo.preflight.prompt_ready ? 'Sí' : 'No'}
-                `;
+        }
+        
+        function continueToPhase1C() {
+            if (!CURRENT_DOC) {
+                alert('No hay documento procesado para continuar');
+                return;
             }
             
-            if (debugInfo.model_info) {
-                document.getElementById('modelSection').style.display = 'block';
-                document.getElementById('modelContent').innerHTML = `
-                    🤖 Modelo: ${debugInfo.model_info.model}<br>
-                    🌡️ Temperatura: ${debugInfo.model_info.temperature}<br>
-                    🎯 Max tokens: ${debugInfo.model_info.max_tokens}<br>
-                    📊 Top P: ${debugInfo.model_info.top_p}
-                `;
+            // Construir URL de Fase 1C
+            const phase1CUrl = `/code/php/phase_1c.php?doc=${encodeURIComponent(CURRENT_DOC)}`;
+            window.location.href = phase1CUrl;
+        }
+        
+        function viewGeneratedFiles() {
+            if (!CURRENT_DOC) {
+                alert('No hay documento seleccionado');
+                return;
             }
             
-            if (debugInfo.prompt) {
-                document.getElementById('promptSection').style.display = 'block';
-                document.getElementById('promptContent').textContent = debugInfo.prompt;
+            // Abrir lista de documentos filtrada o navegar a docs_list
+            const docsListUrl = `/code/php/docs_list.php#${encodeURIComponent(CURRENT_DOC)}`;
+            window.open(docsListUrl, '_blank');
+        }
+        
+        function showResults(text) {
+            // Remover BOM si existe
+            extractedText = text.replace(/^\uFEFF/, '');
+            resultsText.textContent = extractedText;
+            resultsPanel.style.display = 'block';
+            
+            // Configurar eventos de los botones
+            const continuePhase1CBtn = document.getElementById('continuePhase1CBtn');
+            const viewFilesBtn = document.getElementById('viewFilesBtn');
+            
+            if (continuePhase1CBtn) {
+                continuePhase1CBtn.onclick = continueToPhase1C;
             }
             
-            if (debugInfo.request_headers || debugInfo.request_payload) {
-                document.getElementById('requestSection').style.display = 'block';
-                if (debugInfo.request_headers) {
-                    document.getElementById('requestHeaders').textContent = 
-                        JSON.stringify(debugInfo.request_headers, null, 2);
-                }
-                if (debugInfo.request_payload) {
-                    document.getElementById('requestBody').textContent = 
-                        JSON.stringify(debugInfo.request_payload, null, 2);
-                }
-            }
-            
-            if (debugInfo.response_body) {
-                document.getElementById('responseSection').style.display = 'block';
-                document.getElementById('responseContent').textContent = 
-                    JSON.stringify(debugInfo.response_body, null, 2);
+            if (viewFilesBtn) {
+                viewFilesBtn.onclick = viewGeneratedFiles;
             }
         }
         
-        function showResults(result) {
-            resultsPanel.style.display = 'block';
-            
-            // Información de la extracción
-            const usage = result.api_usage;
-            let infoHtml = `
-                📄 <strong>Documento:</strong> ${result.doc_basename}<br>
-                📝 <strong>Longitud texto:</strong> ${result.text_length.toLocaleString()} caracteres<br>
-                ⏰ <strong>Procesado:</strong> ${result.timestamp}
-            `;
-            
-            if (usage) {
-                infoHtml += `<br>🔢 <strong>Tokens usados:</strong> ${usage.total_tokens || 'N/A'}`;
-                if (usage.prompt_tokens) {
-                    infoHtml += ` (${usage.prompt_tokens} prompt + ${usage.completion_tokens} respuesta)`;
-                }
-            }
-            
-            document.getElementById('extractionInfo').innerHTML = infoHtml;
-            
-            // Mostrar texto extraído
-            document.getElementById('extractedTextContent').textContent = result.text_content;
-            
-            // Mostrar botones
-            document.getElementById('downloadTxt').style.display = 'inline-block';
-            document.getElementById('continuePhase2').style.display = 'inline-block';
-            
-            // Actualizar la info del documento en el select
-            const option = docSelect.querySelector(`option[value="${result.doc_basename}"]`);
-            if (option) {
-                option.dataset.hasTxt = 'true';
-                option.textContent = option.textContent.replace('🔄 Pendiente de procesar', '✅ Procesado');
-                if (!option.textContent.includes('✅ Procesado')) {
-                    option.textContent += ' ✅ Procesado';
-                }
-            }
+        function togglePanel(panel) {
+            const content = document.getElementById(`${panel}Content`);
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+        }
+        
+        function toggleHttpDetail(index) {
+            const content = document.getElementById(`debug-http-${index}`);
+            const isVisible = content.style.display !== 'none';
+            content.style.display = isVisible ? 'none' : 'block';
+        }
+        
+        function copyText() {
+            navigator.clipboard.writeText(extractedText).then(() => {
+                alert('Texto copiado al portapapeles');
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                alert('Error al copiar el texto');
+            });
+        }
+        
+        function downloadText() {
+            const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${CURRENT_DOC}_extracted.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        function viewAsFile() {
+            const blob = new Blob([extractedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            window.open(url, '_blank');
         }
     </script>
 </body>

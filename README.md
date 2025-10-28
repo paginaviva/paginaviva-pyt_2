@@ -1,27 +1,42 @@
 # Ed CFLE - Sistema de Procesamiento de PDFs con IA
 
-**📝 Actualizado el 27 de octubre de 2025**
+**📝 Actualizado el 28 de octubre de 2025**
 
 Sistema completo para procesar documentos PDF mediante inteligencia artificial, implementado para el dominio **cfle.plazza.xyz**.
+
+## 🎯 Estado Actual del Proyecto
+
+### ✅ **Fase 1B - COMPLETAMENTE FUNCIONAL**
+Sistema de extracción de texto PDF usando OpenAI API totalmente operativo:
+
+- 🔄 **Extracción PDF → TXT** mediante OpenAI Chat Completions API
+- 💾 **Guardado automático** en `/docs/{NB_archivo}/{NB_archivo}.txt`
+- 📝 **Logs completos** en `/docs/{NB_archivo}/{NB_archivo}.log`
+- 🚀 **Botón "Continuar a Fase 2A"** para flujo de trabajo
+- 🐛 **Debug avanzado** con análisis de respuestas OpenAI
+- ⚡ **Parámetros optimizados** (4000 max_completion_tokens)
+
+### 🔄 **Próximas Fases**
+- **Fase 2A**: Análisis y procesamiento del texto extraído
+- **Fases adicionales**: Según requerimientos del proyecto
 
 ## 🌐 Configuración de Dominios
 
 - **plazza.xyz** → `/home/udnpviva/public_html`
 - **cfle.plazza.xyz** → `/home/udnpviva/public_html/ed_cfle` (subdominio)
 
-## 📁 Estructura del Servidor
+## 📁 Estructura del Servidor (Actualizada)
 
 ```
 /home/udnpviva/public_html/ed_cfle/
 ├── .htaccess
-├── Dir+Arch.txt
 ├── index.php                    # Landing principal con redirección
 ├── php.ini
-├── phpinfo.php
 ├── README.md
 ├── code/
 │   ├── js/
-│   │   └── upload.js           # Cliente para subida chunked de archivos
+│   │   ├── upload.js           # Cliente para subida de archivos
+│   │   └── phase_1b.js         # Funcionalidades avanzadas F1B
 │   └── php/
 │       ├── cleanup.php         # Limpieza automática de archivos temporales
 │       ├── docs_list.php       # Lista de documentos procesados
@@ -30,8 +45,10 @@ Sistema completo para procesar documentos PDF mediante inteligencia artificial, 
 │       ├── lib_apio.php        # Biblioteca de utilidades y configuración
 │       ├── login.php           # Sistema de autenticación
 │       ├── logout.php          # Cierre de sesión
+│       ├── phase_1b.php        # 🆕 Interfaz moderna Fase 1B
+│       ├── phase_1b_proxy.php  # 🆕 Proxy OpenAI para extracción PDF
+│       ├── proxy_common.php    # 🆕 Utilidades comunes para proxies
 │       ├── phase.php           # Gestión de fases de procesamiento
-│       ├── process_pdf.php     # Procesamiento principal de PDFs
 │       ├── process_phase.php   # Procesamiento por fases con IA
 │       ├── upload.php          # Endpoint para subida de archivos
 │       └── upload_form.php     # Formulario de subida (Fase 1A)
@@ -42,8 +59,13 @@ Sistema completo para procesar documentos PDF mediante inteligencia artificial, 
 ├── css/
 │   ├── BeeViva_Logo_Colour.avif # Logo de la aplicación
 │   └── styles.css             # Estilos principales
-├── tmp/                       # Archivos temporales y uploads
-└── uploads/                   # Área de subida de archivos
+├── docs/                      # 🆕 Documentos procesados con estructura:
+│   └── {NB_archivo}/          #     ├── {NB_archivo}.pdf (original)
+│       ├── {NB_archivo}.txt   #     ├── {NB_archivo}.txt (extraído)
+│       └── {NB_archivo}.log   #     └── {NB_archivo}.log (proceso)
+└── tmp/                       # Archivos temporales
+    ├── logs/                  # Logs del sistema
+    └── uploads/               # Uploads temporales
 ```
 
 ## ⚙️ Características Principales
@@ -53,16 +75,25 @@ Sistema completo para procesar documentos PDF mediante inteligencia artificial, 
 - Gestión de usuarios mediante `users.json`
 - Header dinámico con menú contextual
 
-### 📤 Subida de Archivos
-- Subida chunked para archivos grandes (hasta 10MB por defecto)
-- Validación de tipos de archivo (PDFs)
+### 📤 Subida de Archivos (Fase 1A)
+- Subida de archivos PDF (hasta 10MB por defecto)
+- Validación de tipos de archivo
 - Gestión temporal segura
+- Integración automática con Fase 1B
 
-### 🤖 Procesamiento con IA
-- Integración con OpenAI API
-- Procesamiento por fases configurables
-- Extracción y análisis de contenido PDF
-- Generación de respuestas contextuales
+### 🤖 **Sistema F1B - Extracción PDF con IA**
+- **OpenAI Chat Completions API** para extracción de texto
+- **Arquitectura Proxy** moderna con debug completo
+- **Guardado automático** de archivos `.txt` y `.log`
+- **Interfaz moderna** con timeline y debug HTTP
+- **Parámetros configurables** (modelo, temperatura, tokens)
+- **Botón "Continuar a Fase 2A"** para flujo de trabajo
+
+### 🗂️ Gestión de Documentos
+- **Estructura organizada** por nombre base del archivo
+- **Logs detallados** de cada proceso
+- **Lista de documentos** procesados
+- **Descarga de archivos** generados
 
 ### 🧹 Gestión Automática
 - Limpieza de archivos temporales
@@ -132,13 +163,27 @@ chmod 755 tmp/ uploads/
 - URLs públicas configurables via `public_base`
 - Gestión segura de archivos temporales
 
-## 📋 Flujo de Trabajo
+## 📋 Flujo de Trabajo Completo
 
+### 🔄 **Proceso F1B Actual (Funcional)**
 1. **Login** → Autenticación de usuario
-2. **Subida** → Upload de PDF (Fase 1A)
-3. **Procesamiento** → Análisis con IA por fases
-4. **Resultados** → Visualización de documentos procesados
-5. **Limpieza** → Gestión automática de recursos
+2. **Subida PDF (Fase 1A)** → Upload de archivo PDF
+3. **Botón "Generar .TXT (F1B)"** → Redirige a interfaz F1B
+4. **Configurar parámetros OpenAI** → Modelo, temperatura, tokens
+5. **Procesamiento automático**:
+   - Descarga PDF del servidor
+   - Subida a OpenAI Files API
+   - Extracción via Chat Completions API
+   - Guardado automático de `.txt` y `.log`
+6. **Resultados**:
+   - Texto extraído en interfaz
+   - Botón "Continuar a Fase 2A"
+   - Botón "Ver Archivos Generados"
+
+### 🚀 **Próximos Pasos**
+- **Fase 2A**: Análisis del texto extraído
+- **Integración completa** del flujo de fases
+- **Expansión funcionalidades** según necesidades
 
 ## 🔄 Mantenimiento
 
@@ -155,9 +200,33 @@ Los logs se almacenan en `tmp/logs/` y se rotan automáticamente.
 - Revisar logs de errores PHP
 - Monitorear uso de API de OpenAI
 
-## 📚 Documentación Técnica
+## 📚 Documentación Técnica Actualizada
 
-### Funcionalidades del Sistema
+### Sistema F1B - Arquitectura Proxy
+
+**`code/php/phase_1b.php`** - Interfaz moderna Fase 1B:
+- Selección de documento desde URL (`?doc=NB_archivo`)
+- Configuración de parámetros OpenAI (modelo, temperatura, tokens)
+- Timeline de ejecución en tiempo real
+- Debug HTTP completo con análisis de respuestas
+- Resultados con acciones (copiar, descargar, ver como archivo)
+- Botones de navegación a Fase 2A
+
+**`code/php/phase_1b_proxy.php`** - Proxy especializado OpenAI:
+- Validación de entrada y NB del archivo
+- Descarga segura de PDF desde servidor
+- Subida a OpenAI Files API (purpose: 'assistants')
+- Extracción via Chat Completions API
+- Guardado automático de archivos `.txt` y `.log`
+- Debug completo del proceso
+
+**`code/php/proxy_common.php`** - Utilidades comunes para proxies:
+- Clase `ProxyRuntime` para gestión de timeline y debug
+- Métodos para fetch, upload y API calls
+- Extracción inteligente de texto de respuestas OpenAI
+- Formato de respuesta estandarizado
+
+### Funcionalidades del Sistema Base
 
 **`index.php`** - Landing principal que redirige según estado de autenticación:
 - Usuario no logueado → `/code/php/login.php`
@@ -172,17 +241,55 @@ Los logs se almacenan en `tmp/logs/` y se rotan automáticamente.
 - Carga centralizada de configuración
 - Resolución de rutas absolutas/relativas
 - Utilidades para gestión de archivos
+- Funciones de logging para fases
 
 **`code/php/upload_form.php`** - Interfaz de subida (Fase 1A) con:
 - Validación client-side
-- Integración con `upload.js` para chunking
+- Integración con `upload.js`
+- Botón automático "Generar .TXT (F1B)" después de subida exitosa
 - Estilos card responsivos
 
 ### Estructura de Configuración
 
 El archivo `config/config.json` centraliza:
-- Credenciales API de OpenAI
-- Rutas del sistema y URLs públicas
-- Límites de archivos y procesamiento
-- Parámetros del modelo de IA
-- Configuración de limpieza automática
+- **Credenciales API** de OpenAI (`apio_key`)
+- **Rutas del sistema** y URLs públicas (`public_base`)
+- **Límites de archivos** y procesamiento
+- **Parámetros por defecto** del modelo de IA (`apio_defaults`)
+- **Configuración de limpieza** automática
+
+Ejemplo de configuración F1B:
+```json
+{
+  "apio_key": "sk-proj-TU_API_KEY_REAL_AQUI",
+  "apio_models": ["gpt-4o-mini", "gpt-4o", "gpt-5-mini"],
+  "apio_defaults": {
+    "model": "gpt-4o-mini",
+    "temperature": 0.1,
+    "max_tokens": 4000,
+    "top_p": 1.0
+  },
+  "docs_dir": "docs",
+  "tmp_dir": "tmp",
+  "public_base": "https://cfle.plazza.xyz"
+}
+```
+
+## 🔧 Configuración Técnica F1B
+
+### Parámetros OpenAI Optimizados
+- **Modelo recomendado**: gpt-4o-mini (balance costo/calidad)
+- **Max completion tokens**: 4000 (PDFs largos)
+- **Temperatura**: 0.1 (extracción consistente)
+- **Top P**: 1.0 (máxima precisión)
+
+### Archivos Generados
+- **Texto extraído**: `/docs/{NB_archivo}/{NB_archivo}.txt`
+- **Log del proceso**: `/docs/{NB_archivo}/{NB_archivo}.log`
+- **PDF original**: `/docs/{NB_archivo}/{NB_archivo}.pdf`
+
+### Debug y Monitoreo
+- **Timeline completo** de ejecución
+- **Debug HTTP** con análisis de respuestas OpenAI
+- **Logs estructurados** con metadatos del proceso
+- **Información de uso** de tokens y costos
