@@ -95,9 +95,12 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                     <div class="param-group">
                         <label for="model">Modelo:</label>
                         <select id="model" name="model">
-                            <?php foreach ($apioModels as $model): ?>
+                            <?php 
+                            $defaultModel = 'gpt-4o'; // Modelo por defecto fijo
+                            foreach ($apioModels as $model): 
+                            ?>
                                 <option value="<?php echo htmlspecialchars($model); ?>" 
-                                    <?php echo ($model === ($apioDefaults['model'] ?? 'gpt-4o')) ? 'selected' : ''; ?>>
+                                    <?php echo ($model === $defaultModel) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($model); ?>
                                 </option>
                             <?php endforeach; ?>

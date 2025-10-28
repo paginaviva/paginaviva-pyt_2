@@ -84,11 +84,11 @@ $proxyUrl = apio_public_from_cfg_path('/code/php/phase_2a_proxy.php');
                         <select id="model" name="model">
                             <?php 
                             $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
-                            $apioDefaults = $cfg['apio_defaults'] ?? [];
+                            $defaultModel = 'gpt-4o'; // Modelo por defecto fijo
                             foreach ($apioModels as $model): 
                             ?>
                                 <option value="<?php echo htmlspecialchars($model); ?>" 
-                                    <?php echo ($model === ($apioDefaults['model'] ?? 'gpt-4o')) ? 'selected' : ''; ?>>
+                                    <?php echo ($model === $defaultModel) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($model); ?>
                                 </option>
                             <?php endforeach; ?>
@@ -167,8 +167,8 @@ $proxyUrl = apio_public_from_cfg_path('/code/php/phase_2a_proxy.php');
                 <div class="next-phase-section">
                     <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
                     <p>Los metadatos técnicos han sido extraídos y guardados. Puedes continuar con la siguiente fase.</p>
-                    <button id="continuePhase2BBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;" disabled>
-                        📤 Continuar a Fase 2B (próximamente)
+                    <button id="continuePhase2BBtn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
+                        📤 Continuar a Fase 2B
                     </button>
                     <button id="viewFilesBtn" class="btn" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
                         📁 Ver Archivos Generados
@@ -207,6 +207,13 @@ $proxyUrl = apio_public_from_cfg_path('/code/php/phase_2a_proxy.php');
             const viewFilesBtn = document.getElementById('viewFilesBtn');
             if (viewFilesBtn) {
                 viewFilesBtn.onclick = () => viewGeneratedFiles(CURRENT_DOC);
+            }
+            
+            const continuePhase2BBtn = document.getElementById('continuePhase2BBtn');
+            if (continuePhase2BBtn) {
+                continuePhase2BBtn.onclick = () => {
+                    window.location.href = 'phase_2b.php?doc=' + encodeURIComponent(CURRENT_DOC);
+                };
             }
         }
         

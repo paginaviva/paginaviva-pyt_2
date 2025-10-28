@@ -167,8 +167,8 @@ class Phase2AProxy
         // Reemplazar placeholder {FILE_ID} con instrucción genérica
         $instructions = str_replace('{FILE_ID}', 'the file_id provided in the message', $promptTemplate);
         
-        // Usar modelo del usuario o default del config
-        $model = $modelOverride ?? ($this->config['apio_defaults']['model'] ?? 'gpt-4o');
+        // Usar modelo del usuario o default fijo "gpt-4o" (no usar config.json)
+        $model = $modelOverride ?? 'gpt-4o';
         
         $payload = [
             'model' => $model,

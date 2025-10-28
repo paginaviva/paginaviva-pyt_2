@@ -183,8 +183,8 @@ class Phase2BProxy
         $instructions = str_replace('{FILE_ID}', 'the file_id provided in the message', $promptTemplate);
         $instructions = str_replace('{JSON_PREVIO}', json_encode($this->jsonPrevio, JSON_UNESCAPED_UNICODE), $instructions);
         
-        // Usar modelo del usuario o default del config
-        $model = $modelOverride ?? ($this->config['apio_defaults']['model'] ?? 'gpt-4o');
+        // Usar modelo del usuario o default fijo "gpt-4o" (no usar config.json)
+        $model = $modelOverride ?? 'gpt-4o';
         
         $payload = [
             'model' => $model,
