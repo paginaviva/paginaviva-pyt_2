@@ -107,13 +107,15 @@ if (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name'])) {
             require_once $processFile;
             if (function_exists('process_uploaded_pdf')) {
                 $processResult = process_uploaded_pdf($destPath);
+            } else {
+                $processResult = ['ok' => false, 'error' => 'Function process_uploaded_pdf not found'];
             }
         } catch (Throwable $e) {
             $processResult = ['ok' => false, 'error' => $e->getMessage()];
         }
     }
 
-    // Devolver ruta relativa p�blica si es posible (usar public_base + path relative to doc root)
+    // Devolver ruta relativa pública si es posible (usar public_base + path relative to doc root)
     $publicBase = rtrim($config['public_base'] ?? '', '/');
     $relativePath = str_replace(rtrim($config['project_root'], "/\\"), '', $destPath);
     $relativePath = ltrim(str_replace(DIRECTORY_SEPARATOR, '/', $relativePath), '/');

@@ -456,14 +456,17 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
                     <!-- Se llena dinámicamente -->
                 </div>
                 
-                <!-- Sección Fase 2A -->
+                <!-- Sección Fase 1C -->
                 <div class="phase2a-section" style="margin-top: 20px; padding: 15px; background: #e8f5e8; border: 2px solid #28a745; border-radius: 8px;">
                     <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
                     <p>El texto se ha extraído y guardado correctamente. Puedes continuar con la siguiente fase del procesamiento.</p>
-                    <button id="continuePhase2Btn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
-                        ⏭️ Continuar a Fase 2A
+                    <button id="continuePhase1CBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
+                        📤 Continuar a Fase 1C (Subir a OpenAI)
                     </button>
-                    <button id="viewFilesBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                    <button id="continuePhase2ABtn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
+                        ⏭️ Ir directo a Fase 2A
+                    </button>
+                    <button id="viewFilesBtn" class="btn" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
                         📁 Ver Archivos Generados
                     </button>
                 </div>
@@ -648,6 +651,17 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             debugPanel.style.display = 'block';
         }
         
+        function continueToPhase1C() {
+            if (!CURRENT_DOC) {
+                alert('No hay documento procesado para continuar');
+                return;
+            }
+            
+            // Construir URL de Fase 1C
+            const phase1CUrl = `/code/php/phase_1c.php?doc=${encodeURIComponent(CURRENT_DOC)}`;
+            window.location.href = phase1CUrl;
+        }
+        
         function continueToPhase2A() {
             if (!CURRENT_DOC) {
                 alert('No hay documento procesado para continuar');
@@ -681,11 +695,16 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             resultsPanel.style.display = 'block';
             
             // Configurar eventos de los nuevos botones
-            const continueBtn = document.getElementById('continuePhase2Btn');
+            const continuePhase1CBtn = document.getElementById('continuePhase1CBtn');
+            const continuePhase2ABtn = document.getElementById('continuePhase2ABtn');
             const viewFilesBtn = document.getElementById('viewFilesBtn');
             
-            if (continueBtn) {
-                continueBtn.onclick = continueToPhase2A;
+            if (continuePhase1CBtn) {
+                continuePhase1CBtn.onclick = continueToPhase1C;
+            }
+            
+            if (continuePhase2ABtn) {
+                continuePhase2ABtn.onclick = continueToPhase2A;
             }
             
             if (viewFilesBtn) {
