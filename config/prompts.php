@@ -185,3 +185,77 @@ PROMPT
 ];
 
 // Puedes añadir aquí más plantillas por fase (3..10) siguiendo la estructura.
+
+/**
+ * FASE 2C: Añadir campos taxonómicos desde Taxonomia Cofem.csv
+ */
+$PROMPTS[2]['p_add_taxonomy_fields'] = [
+    'prompt' => <<<'PROMPT'
+OBJECTIVE:
+Use the content of the original document associated with the file_id and the information from the master taxonomy file (also identified by its own file_id) to expand the JSON received from the previous block by adding standardized and verifiable taxonomic fields.
+
+INSTRUCTIONS:
+1. Use exclusively the contents accessible through the specified file_ids:
+   - Main technical document file: {FILE_ID}
+   - Master taxonomy file: {FILE_ID_TAXONOMIA}
+
+2. The JSON data generated in the previous block is:
+   {JSON_PREVIO}
+   - Do not delete or rename any of its keys.
+   - Add only the new fields indicated below.
+
+3. Analyze the complete text of the technical document (content of the file linked to file_id) and the records of the taxonomy file (content of the file linked to file_id_taxonomia).
+
+4. Perform a search for matches between the product identified in the JSON (`codigo_referencia_cofem` or `nombre_producto`) and the values present in the taxonomy file, following this priority:
+   a) Exact match by Cofem code or reference.
+   b) Exact match by product name.
+   c) Approximate or semantically close match, considering minor differences (uppercase, accents, or spaces).
+
+5. From the most reliable match, extract the official values of the following taxonomy fields and add them to the received JSON:
+   - `grupos_de_soluciones`: value of the "Grupos de Soluciones" field.
+   - `familia`: value of the "Familia" field.
+   - `categoria`: value of the "Categoría" field.
+
+6. If no match is found, leave these three fields empty (`""`) and add the following field:
+   ```json
+   "incidencias_taxonomia": [
+     "No match found in Taxonomia Cofem.csv for [Code/Name]"
+   ]
+   ```
+
+7. If a match is found, also include the field `incidencias_taxonomia` as an empty list (`[]`).
+
+8. Write all values in a precise, technical, and verifiable manner, without inventing or inferring data that is not present.
+
+9. Maintain key naming in snake_case (all lowercase with underscores).
+
+10. Do not modify or remove any existing field from the received JSON.
+
+11. The final response must consist only of the complete JSON object, containing all original and newly added fields, without any text, explanations, or comments outside the JSON.
+
+MANDATORY OUTPUT SCHEMA:
+```json
+{
+  "file_id": "",
+  "nombre_archivo": "",
+  "nombre_producto": "",
+  "codigo_referencia_cofem": "",
+  "tipo_documento": "",
+  "tipo_informacion_contenida": "",
+  "fecha_emision_revision": "",
+  "idiomas_presentes": [],
+  "normas_detectadas": [],
+  "certificaciones_detectadas": [],
+  "manuales_relacionados": [],
+  "otros_productos_relacionados": [],
+  "accesorios_relacionados": [],
+  "uso_formacion_tecnicos": false,
+  "razon_uso_formacion": "",
+  "grupos_de_soluciones": "",
+  "familia": "",
+  "categoria": "",
+  "incidencias_taxonomia": []
+}
+```
+PROMPT
+];

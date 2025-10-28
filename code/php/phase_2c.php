@@ -1,10 +1,10 @@
 <?php
 /**
- * phase_2b.php
- * FRONTEND para Fase 2B: Ampliar metadatos técnicos
+ * phase_2c.php
+ * FRONTEND para Fase 2C: Añadir campos taxonómicos
  * 
- * Propósito: Ejecutar análisis con Assistants API para ampliar el JSON
- * generado en F2A con información técnica adicional (normas, certificaciones, etc.)
+ * Propósito: Cruzar JSON de F2B con Taxonomia Cofem.csv para agregar
+ * clasificación oficial (grupos_de_soluciones, familia, categoria)
  */
 
 session_start();
@@ -19,39 +19,38 @@ $cfg = apio_load_config();
 $docBasename = isset($_GET['doc']) ? trim($_GET['doc']) : '';
 
 if (!$docBasename) {
-    die('Documento no especificado. Use: phase_2b.php?doc=NOMBRE_DOCUMENTO');
+    die('Documento no especificado. Use: phase_2c.php?doc=NOMBRE_DOCUMENTO');
 }
 
-// Verificar que existe el JSON de F2A
+// Verificar que existe el JSON de F2B
 $jsonFile = $cfg['docs_dir'] . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.json';
 if (!file_exists($jsonFile)) {
-    die('Error: Debe completar la Fase 2A primero.');
+    die('Error: Debe completar la Fase 2B primero.');
 }
 
-// Leer JSON de F2A
-$jsonF2A = json_decode(file_get_contents($jsonFile), true);
-if (!is_array($jsonF2A)) {
-    die('Error: El JSON de F2A no es válido.');
+// Leer JSON de F2B
+$jsonF2B = json_decode(file_get_contents($jsonFile), true);
+if (!is_array($jsonF2B)) {
+    die('Error: El JSON de F2B no es válido.');
 }
 
-// Verificar si el JSON ya está ampliado (tiene campos de F2B)
-$isExpanded = array_key_exists('normas_detectadas', $jsonF2A) || 
-              array_key_exists('certificaciones_detectadas', $jsonF2A) ||
-              array_key_exists('uso_formacion_tecnicos', $jsonF2A);
+// Verificar si el JSON ya tiene campos taxonómicos (F2C completada)
+$isTaxonomized = array_key_exists('grupos_de_soluciones', $jsonF2B) || 
+                  array_key_exists('familia', $jsonF2B) ||
+                  array_key_exists('categoria', $jsonF2B);
 
 // URL del proxy
-$proxyUrl = apio_public_from_cfg_path('/code/php/phase_2b_proxy.php');
+$proxyUrl = apio_public_from_cfg_path('/code/php/phase_2c_proxy.php');
 
 // Configuración de parámetros OpenAI
 $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
-$apioDefaults = $cfg['apio_defaults'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔬 Fase 2B — Ampliar Metadatos Técnicos</title>
+    <title>🏷️ Fase 2C — Clasificación Taxonómica</title>
     <link rel="stylesheet" href="<?php echo apio_public_from_cfg_path('/css/styles.css'); ?>">
     <link rel="stylesheet" href="<?php echo apio_public_from_cfg_path('/code/css/phase_common.css'); ?>">
 </head>
@@ -59,31 +58,32 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
     <?php require_once __DIR__ . '/header.php'; ?>
     
     <div class="container">
-        <h2>🔬 Fase 2B &mdash; Ampliar Metadatos Técnicos</h2>
+        <h2>🏷️ Fase 2C &mdash; Clasificación Taxonómica</h2>
         <p>
-            Esta fase amplia el JSON generado en la <strong>Fase 2A</strong> con información técnica adicional extraída del documento: 
-            normas, certificaciones, manuales relacionados, productos relacionados, accesorios y requisitos de formación técnica.
+            Esta fase cruza el JSON de <strong>Fase 2B</strong> con el archivo maestro <strong>Taxonomia Cofem.csv</strong> 
+            para añadir campos de clasificación oficial: grupos de soluciones, familia y categoría.
         </p>
         
         <div class="file-info">
             <h3>📄 Información del Documento:</h3>
             <div class="info-display">
                 <strong>Documento:</strong> <?php echo htmlspecialchars($docBasename); ?><br>
-                <strong>Estado JSON F2A:</strong> <?php echo $isExpanded ? '🔬 Ya ampliado (se puede reprocesar)' : '📊 Básico (8 campos)'; ?><br>
-                <strong>Archivo JSON:</strong> <?php echo htmlspecialchars(basename($jsonFile)); ?>
+                <strong>Estado JSON:</strong> <?php echo $isTaxonomized ? '🏷️ Ya clasificado (se puede reprocesar)' : '📊 Sin clasificación taxonómica'; ?><br>
+                <strong>Producto:</strong> <?php echo htmlspecialchars($jsonF2B['nombre_producto'] ?? '(desconocido)'); ?><br>
+                <strong>Código Cofem:</strong> <?php echo htmlspecialchars($jsonF2B['codigo_referencia_cofem'] ?? '(desconocido)'); ?>
             </div>
         </div>
         
-        <?php if ($isExpanded): ?>
+        <?php if ($isTaxonomized): ?>
         <div class="existing-json-warning">
-            ⚠️ <strong>Nota:</strong> Este JSON ya fue ampliado en F2B. Si lo procesas de nuevo, se sobrescribirá.
+            ⚠️ <strong>Nota:</strong> Este JSON ya tiene clasificación taxonómica. Si lo procesas de nuevo, se sobrescribirá.
         </div>
         <?php endif; ?>
         
         <div class="params-panel">
-            <h3>📊 JSON Actual (F2A)</h3>
+            <h3>📊 JSON Actual (F2B - 14 campos)</h3>
             <div class="json-display" style="max-height: 300px; overflow-y: auto;">
-                <pre><?php echo htmlspecialchars(json_encode($jsonF2A, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
+                <pre><?php echo htmlspecialchars(json_encode($jsonF2B, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></pre>
             </div>
         </div>
         
@@ -114,7 +114,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         </div>
         
         <button type="button" id="processBtn" class="process-btn">
-            🚀 Ejecutar Ampliación de Metadatos
+            🚀 Ejecutar Clasificación Taxonómica
         </button>
         
         <div id="statusIndicator" class="status-indicator"></div>
@@ -138,24 +138,24 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         </div>
         
         <div id="resultsPanel" class="results-panel">
-            <div class="results-header">✅ Ampliación Completada</div>
+            <div class="results-header">✅ Clasificación Completada</div>
             <div class="results-content">
-                <h3>📄 JSON Ampliado (14 campos):</h3>
+                <h3>📄 JSON Final (18 campos):</h3>
                 <div class="results-actions">
                     <button class="action-btn" onclick="copyResult()">📋 Copiar JSON</button>
                     <button class="action-btn" onclick="downloadResult()">💾 Descargar JSON</button>
                 </div>
                 <div id="resultsJson" class="json-display"></div>
                 
-                <h3 style="margin-top: 30px;">📊 Campos Ampliados:</h3>
-                <div id="expandedFields" class="expanded-fields-display"></div>
+                <h3 style="margin-top: 30px;">🏷️ Campos Taxonómicos:</h3>
+                <div id="taxonomicFields" class="expanded-fields-display"></div>
                 
                 <div class="next-phase-section">
                     <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
-                    <button id="continuePhase2CBtn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 10px;">
-                        ➡️ Continuar a Fase 2C
+                    <button id="continuePhaseBtn" class="btn" disabled style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: not-allowed;">
+                        ➡️ Continuar a Próxima Fase (Próximamente)
                     </button>
-                    <button id="viewFilesBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                    <button id="viewFilesBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-left: 10px;">
                         📁 Ver Archivos Generados
                     </button>
                 </div>
@@ -173,13 +173,6 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         document.addEventListener('DOMContentLoaded', () => {
             processBtn.addEventListener('click', handleProcess);
             document.getElementById('viewFilesBtn').onclick = () => viewGeneratedFiles(CURRENT_DOC);
-            
-            const continuePhase2CBtn = document.getElementById('continuePhase2CBtn');
-            if (continuePhase2CBtn) {
-                continuePhase2CBtn.onclick = () => {
-                    window.location.href = 'phase_2c.php?doc=' + encodeURIComponent(CURRENT_DOC);
-                };
-            }
         });
         
         async function handleProcess() {
@@ -187,7 +180,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             
             const modelSelect = document.getElementById('model');
             processBtn.disabled = true;
-            showStatus('🔄 Ampliando metadatos...', 'processing');
+            showStatus('🔄 Clasificando producto...', 'processing');
             
             document.getElementById('timelinePanel').style.display = 'none';
             document.getElementById('resultsPanel').style.display = 'none';
@@ -237,36 +230,39 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
             // Mostrar JSON completo
             document.getElementById('resultsJson').innerHTML = '<pre>' + escapeHtml(processedResult) + '</pre>';
             
-            // Mostrar campos ampliados destacados
-            const expandedFieldsHtml = `
+            // Mostrar campos taxonómicos destacados
+            const incidencias = jsonData.incidencias_taxonomia || [];
+            const hasIncidencias = Array.isArray(incidencias) && incidencias.length > 0;
+            
+            const taxonomicFieldsHtml = `
                 <div class="field-group">
-                    <h4>📋 Normas Detectadas:</h4>
-                    <pre>${escapeHtml(JSON.stringify(jsonData.normas_detectadas || [], null, 2))}</pre>
+                    <h4>🎯 Grupos de Soluciones:</h4>
+                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.grupos_de_soluciones ? '#28a745' : '#dc3545'};">
+                        ${escapeHtml(jsonData.grupos_de_soluciones || '(no encontrado)')}
+                    </p>
                 </div>
                 <div class="field-group">
-                    <h4>🏅 Certificaciones Detectadas:</h4>
-                    <pre>${escapeHtml(JSON.stringify(jsonData.certificaciones_detectadas || [], null, 2))}</pre>
+                    <h4>👨‍👩‍👧‍👦 Familia:</h4>
+                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.familia ? '#28a745' : '#dc3545'};">
+                        ${escapeHtml(jsonData.familia || '(no encontrado)')}
+                    </p>
                 </div>
                 <div class="field-group">
-                    <h4>📚 Manuales Relacionados:</h4>
-                    <pre>${escapeHtml(JSON.stringify(jsonData.manuales_relacionados || [], null, 2))}</pre>
+                    <h4>📂 Categoría:</h4>
+                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.categoria ? '#28a745' : '#dc3545'};">
+                        ${escapeHtml(jsonData.categoria || '(no encontrado)')}
+                    </p>
                 </div>
                 <div class="field-group">
-                    <h4>🔗 Otros Productos Relacionados:</h4>
-                    <pre>${escapeHtml(JSON.stringify(jsonData.otros_productos_relacionados || [], null, 2))}</pre>
-                </div>
-                <div class="field-group">
-                    <h4>🔌 Accesorios Relacionados:</h4>
-                    <pre>${escapeHtml(JSON.stringify(jsonData.accesorios_relacionados || [], null, 2))}</pre>
-                </div>
-                <div class="field-group">
-                    <h4>👨‍🔧 Uso/Formación Técnicos:</h4>
-                    <p><strong>${jsonData.uso_formacion_tecnicos ? 'Sí' : 'No'}</strong></p>
-                    ${jsonData.razon_uso_formacion ? '<p>Razón: ' + escapeHtml(jsonData.razon_uso_formacion) + '</p>' : ''}
+                    <h4>⚠️ Incidencias de Taxonomía:</h4>
+                    ${hasIncidencias 
+                        ? '<ul style="color: #dc3545;">' + incidencias.map(inc => '<li>' + escapeHtml(inc) + '</li>').join('') + '</ul>'
+                        : '<p style="color: #28a745; font-weight: bold;">✓ Sin incidencias (match encontrado)</p>'
+                    }
                 </div>
             `;
             
-            document.getElementById('expandedFields').innerHTML = expandedFieldsHtml;
+            document.getElementById('taxonomicFields').innerHTML = taxonomicFieldsHtml;
             document.getElementById('resultsPanel').style.display = 'block';
         }
         
@@ -281,7 +277,7 @@ $apioDefaults = $cfg['apio_defaults'] ?? [];
         }
         
         function downloadResult() {
-            if (processedResult) downloadFile(processedResult, `${CURRENT_DOC}_expanded.json`);
+            if (processedResult) downloadFile(processedResult, `${CURRENT_DOC}_taxonomized.json`);
         }
     </script>
 </body>
