@@ -236,23 +236,20 @@ $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
             
             const taxonomicFieldsHtml = `
                 <div class="field-group">
-                    <h4>🎯 Grupos de Soluciones:</h4>
-                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.grupos_de_soluciones ? '#28a745' : '#dc3545'};">
-                        ${escapeHtml(jsonData.grupos_de_soluciones || '(no encontrado)')}
-                    </p>
+                    <h4 style="color: #6c757d;">📦 Identificación de Producto</h4>
+                    <p><strong>Código Encontrado:</strong> <span style="color: ${jsonData.codigo_encontrado ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.codigo_encontrado || '(no encontrado)')}</span></p>
+                    <p><strong>Nombre Encontrado:</strong> <span style="color: ${jsonData.nombre_encontrado ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.nombre_encontrado || '(no encontrado)')}</span></p>
+                    <p><strong>Familia Catálogo:</strong> <span style="color: ${jsonData.familia_catalogo ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.familia_catalogo || '(no encontrado)')}</span></p>
+                    <p><strong>Nivel de Confianza:</strong> <span style="color: ${jsonData.nivel_confianza_identificacion ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.nivel_confianza_identificacion || '(no determinado)')}</span></p>
                 </div>
+                <hr>
                 <div class="field-group">
-                    <h4>👨‍👩‍👧‍👦 Familia:</h4>
-                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.familia ? '#28a745' : '#dc3545'};">
-                        ${escapeHtml(jsonData.familia || '(no encontrado)')}
-                    </p>
+                    <h4 style="color: #007bff;">🏛️ Clasificación Taxonómica Oficial</h4>
+                    <p><strong>🎯 Grupos de Soluciones:</strong> <span style="font-size: 16px; font-weight: bold; color: ${jsonData.grupos_de_soluciones ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.grupos_de_soluciones || '(no encontrado)')}</span></p>
+                    <p><strong>👨‍👩‍👧‍👦 Familia:</strong> <span style="font-size: 16px; font-weight: bold; color: ${jsonData.familia ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.familia || '(no encontrado)')}</span></p>
+                    <p><strong>📂 Categoría:</strong> <span style="font-size: 16px; font-weight: bold; color: ${jsonData.categoria ? '#28a745' : '#dc3545'};">${escapeHtml(jsonData.categoria || '(no encontrado)')}</span></p>
                 </div>
-                <div class="field-group">
-                    <h4>📂 Categoría:</h4>
-                    <p style="font-size: 16px; font-weight: bold; color: ${jsonData.categoria ? '#28a745' : '#dc3545'};">
-                        ${escapeHtml(jsonData.categoria || '(no encontrado)')}
-                    </p>
-                </div>
+                <hr>
                 <div class="field-group">
                     <h4>⚠️ Incidencias de Taxonomía:</h4>
                     ${hasIncidencias 

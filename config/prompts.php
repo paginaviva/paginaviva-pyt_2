@@ -187,53 +187,95 @@ PROMPT
 // Puedes añadir aquí más plantillas por fase (3..10) siguiendo la estructura.
 
 /**
- * FASE 2C: Añadir campos taxonómicos desde Taxonomia Cofem.csv
+ * FASE 2C: Añadir campos taxonómicos desde Productos_Cofem.csv y Taxonomia Cofem.csv
  */
 $PROMPTS[2]['p_add_taxonomy_fields'] = [
     'prompt' => <<<'PROMPT'
-OBJECTIVE:
-Use the content of the original document associated with the file_id and the information from the master taxonomy file (also identified by its own file_id) to expand the JSON received from the previous block by adding standardized and verifiable taxonomic fields.
+## OBJECTIVE:
+Use the content of the original technical document associated with the `{FILE_ID}`, together with the information from two auxiliary CSV files — Productos_Cofem.csv and Taxonomía_Cofem.csv — to expand the JSON received from the previous block by adding standardized and verifiable taxonomic and classification fields.
 
-INSTRUCTIONS:
-1. Use exclusively the contents accessible through the specified file_ids:
+## INSTRUCTIONS
+1. Use exclusively the contents accessible through the following file identifiers:
    - Main technical document file: {FILE_ID}
-   - Master taxonomy file: {FILE_ID_TAXONOMIA}
+   - Product reference file: {FILE_ID_PRODUCTOS} (corresponding to *Productos_Cofem.csv*)
+   - Master taxonomy file: {FILE_ID_TAXONOMIA} (corresponding to *Taxonomía_Cofem.csv*)
 
 2. The JSON data generated in the previous block is:
    {JSON_PREVIO}
-   - Do not delete or rename any of its keys.
-   - Add only the new fields indicated below.
+   - Do not delete or rename any existing keys.
+   - Add only the new fields described below.
 
-3. Analyze the complete text of the technical document (content of the file linked to file_id) and the records of the taxonomy file (content of the file linked to file_id_taxonomia).
+3. Analyse all three sources of information:
+   - The complete text of the technical document (linked to `{FILE_ID}`).
+   - The records from *Productos_Cofem.csv*.
+   - The records from *Taxonomía_Cofem.csv*.
 
-4. Perform a search for matches between the product identified in the JSON (`codigo_referencia_cofem` or `nombre_producto`) and the values present in the taxonomy file, following this priority:
-   a) Exact match by Cofem code or reference.
-   b) Exact match by product name.
-   c) Approximate or semantically close match, considering minor differences (uppercase, accents, or spaces).
+## ROLE: `IntegradorTaxonomico`
+Executes the correlation and enrichment process defined in steps 4 and 5.
+Acts deterministically and verifiably, without altering the textual form of any source.
 
-5. From the most reliable match, extract the official values of the following taxonomy fields and add them to the received JSON:
-   - `grupos_de_soluciones`: value of the "Grupos de Soluciones" field.
-   - `familia`: value of the "Familia" field.
-   - `categoria`: value of the "Categoría" field.
+## STEP 4 — Product Identification (source: Productos_Cofem.csv)
+Objective: Locate the exact or most reliable product record and extract related information.
 
-6. If no match is found, leave these three fields empty (`""`) and add the following field:
+Procedure:
+1. Compare the JSON fields `codigo_referencia_cofem` and `nombre_producto` against the corresponding columns in *Productos_Cofem.csv*.
+   Do not normalise or modify the text (keep accents, case, and spacing exactly as in the sources).
+
+2. Apply the following match priority:
+   1 Exact match by Cofem code/reference (`codigo_referencia_cofem`).
+   2 Exact match by product name (`nombre_producto`).
+   3 Partial or semantically close match, provided it is objectively verifiable and unambiguous.
+
+3. If multiple valid matches exist:
+   - Prefer the record with a non-empty familia.
+   - If a tie remains, select the first encountered record and register an informational note in `incidencias_taxonomia`.
+
+4. Add directly to the JSON the following intermediate fields:
    ```json
-   "incidencias_taxonomia": [
-     "No match found in Taxonomia Cofem.csv for [Code/Name]"
-   ]
+   "codigo_encontrado": "",
+   "nombre_encontrado": "",
+   "familia_catalogo": "",
+   "nivel_confianza_identificacion": ""
    ```
+   - Populate these with data from the most reliable match.
+   - If no valid match is found, leave them empty (`""`) and record the corresponding incidence.
 
-7. If a match is found, also include the field `incidencias_taxonomia` as an empty list (`[]`).
+## STEP 5 — Taxonomic Classification (source: Taxonomía_Cofem.csv)
+Objective: Retrieve the official Cofem taxonomy for the identified product or its family.
 
-8. Write all values in a precise, technical, and verifiable manner, without inventing or inferring data that is not present.
+Procedure:
+1. Use the values from step 4 (`familia_catalogo`, `codigo_encontrado`, `nombre_encontrado`) as lookup inputs.
 
-9. Maintain key naming in snake_case (all lowercase with underscores).
+2. Search within *Taxonomía_Cofem.csv* for the corresponding official entries:
+   - `Grupos de Soluciones`
+   - `Familia`
+   - `Categoría`
 
-10. Do not modify or remove any existing field from the received JSON.
+3. Correlation rules:
+   - If the family from *Productos_Cofem.csv* matches exactly one in *Taxonomía_Cofem.csv*, adopt the taxonomy values from the latter.
+   - If both files disagree, the taxonomy file always prevails.
+   - If no valid correlation exists, leave the three taxonomy fields empty and record the standard incidence message.
 
-11. The final response must consist only of the complete JSON object, containing all original and newly added fields, without any text, explanations, or comments outside the JSON.
+4. Add to the JSON the definitive taxonomy fields:
+   ```json
+   "grupos_de_soluciones": "",
+   "familia": "",
+   "categoria": "",
+   "incidencias_taxonomia": []
+   ```
+   - When a valid match is found, keep `incidencias_taxonomia` as an empty list `[]`.
+   - When no match is found, include:
+     ```
+     "No match found in Productos_Cofem.csv or Taxonomía_Cofem.csv for [Code/Name]"
+     ```
 
-MANDATORY OUTPUT SCHEMA:
+## RULES AND OUTPUT
+- Maintain snake_case naming (lowercase with underscores).
+- Never modify or remove any existing key from the received JSON.
+- Populate all new values precisely and verifiably, without inferring or fabricating information.
+- The final response must consist only of the full JSON object, without explanations, comments, or additional text.
+
+## MANDATORY OUTPUT SCHEMA
 ```json
 {
   "file_id": "",
@@ -251,6 +293,10 @@ MANDATORY OUTPUT SCHEMA:
   "accesorios_relacionados": [],
   "uso_formacion_tecnicos": false,
   "razon_uso_formacion": "",
+  "codigo_encontrado": "",
+  "nombre_encontrado": "",
+  "familia_catalogo": "",
+  "nivel_confianza_identificacion": "",
   "grupos_de_soluciones": "",
   "familia": "",
   "categoria": "",

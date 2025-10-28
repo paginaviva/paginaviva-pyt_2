@@ -19,6 +19,7 @@ class Phase2CProxy
     private array $config;
     private array $input;
     private string $fileId;
+    private string $fileIdProductos;
     private string $fileIdTaxonomia;
     private array $jsonPrevio;
     private ?string $assistantId = null;
@@ -95,11 +96,16 @@ class Phase2CProxy
         if (!file_exists($fileidFile)) {
             $this->fail(400, 'Debe completar Fase 1C primero. No se encontró: ' . basename($fileidFile));
         }
-        
         // Leer file_id del documento
         $this->fileId = trim(file_get_contents($fileidFile));
         if (empty($this->fileId)) {
             $this->fail(400, 'El archivo .fileid está vacío');
+        }
+        
+        // Leer file_id_productos del config
+        $this->fileIdProductos = $this->config['file_id_productos'] ?? '';
+        if (empty($this->fileIdProductos)) {
+            $this->fail(500, 'file_id_productos no configurado en config.json');
         }
         
         // Leer file_id_taxonomia del config
@@ -196,6 +202,7 @@ class Phase2CProxy
         
         // Reemplazar placeholders
         $instructions = str_replace('{FILE_ID}', 'the file_id provided in the message', $promptTemplate);
+        $instructions = str_replace('{FILE_ID_PRODUCTOS}', 'the file_id_productos provided in the message', $instructions);
         $instructions = str_replace('{FILE_ID_TAXONOMIA}', 'the file_id_taxonomia provided in the message', $instructions);
         $instructions = str_replace('{JSON_PREVIO}', json_encode($this->jsonPrevio, JSON_UNESCAPED_UNICODE), $instructions);
         
@@ -345,15 +352,19 @@ class Phase2CProxy
     {
         $this->mark('message.add.start');
         
-        // Mensaje incluyendo el JSON previo y referencias a ambos archivos
+        // Mensaje incluyendo el JSON previo y referencias a los tres archivos
         $jsonPrevioStr = json_encode($this->jsonPrevio, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         
         $payload = [
             'role' => 'user',
-            'content' => "Please add taxonomic fields to the following JSON by matching with Taxonomia Cofem.csv.\n\nDocument file_id: {$this->fileId}\nTaxonomy file_id: {$this->fileIdTaxonomia}\n\nCurrent JSON:\n{$jsonPrevioStr}",
+            'content' => "Please add taxonomic fields to the following JSON by matching with Productos_Cofem.csv and Taxonomía_Cofem.csv.\n\nDocument file_id: {$this->fileId}\nProducts file_id: {$this->fileIdProductos}\nTaxonomy file_id: {$this->fileIdTaxonomia}\n\nCurrent JSON:\n{$jsonPrevioStr}",
             'attachments' => [
                 [
                     'file_id' => $this->fileId,
+                    'tools' => [['type' => 'code_interpreter']]
+                ],
+                [
+                    'file_id' => $this->fileIdProductos,
                     'tools' => [['type' => 'code_interpreter']]
                 ],
                 [
@@ -401,6 +412,7 @@ class Phase2CProxy
             ],
             'response' => json_decode($resp, true) ?: $resp,
             'file_id_document' => $this->fileId,
+            'file_id_productos' => $this->fileIdProductos,
             'file_id_taxonomia' => $this->fileIdTaxonomia,
             'json_previo_length' => strlen($jsonPrevioStr)
         ];
@@ -668,8 +680,8 @@ class Phase2CProxy
             }
         }
         
-        // Validar que tenga al menos una de las nuevas claves de F2C
-        $newKeys = ['grupos_de_soluciones', 'familia', 'categoria', 'incidencias_taxonomia'];
+        // Validar que tenga al menos una de las nuevas claves de F2C (intermedias + finales)
+        $newKeys = ['codigo_encontrado', 'nombre_encontrado', 'familia_catalogo', 'nivel_confianza_identificacion', 'grupos_de_soluciones', 'familia', 'categoria', 'incidencias_taxonomia'];
         $hasNewKey = false;
         foreach ($newKeys as $key) {
             if (array_key_exists($key, $jsonData)) {
@@ -704,6 +716,12 @@ class Phase2CProxy
         $logData = [
             'timestamp' => date('Y-m-d H:i:s'),
             'phase' => '2C',
+            'status' => 'SUCCESS',
+            'doc_basename' => $this->docBasename,
+            'file_id' => $this->fileId,
+            'file_id_productos' => $this->fileIdProductos,
+            'file_id_taxonomia' => $this->fileIdTaxonomia,
+            'assistant_id' => $this->assistantId,
             'status' => 'SUCCESS',
             'doc_basename' => $this->docBasename,
             'file_id' => $this->fileId,
