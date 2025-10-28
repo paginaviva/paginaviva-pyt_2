@@ -353,10 +353,12 @@ class Phase2CProxy
             'content' => "Please add taxonomic fields to the following JSON by matching with Taxonomia Cofem.csv.\n\nDocument file_id: {$this->fileId}\nTaxonomy file_id: {$this->fileIdTaxonomia}\n\nCurrent JSON:\n{$jsonPrevioStr}",
             'attachments' => [
                 [
-                    'file_id' => $this->fileId
+                    'file_id' => $this->fileId,
+                    'tools' => [['type' => 'code_interpreter']]
                 ],
                 [
-                    'file_id' => $this->fileIdTaxonomia
+                    'file_id' => $this->fileIdTaxonomia,
+                    'tools' => [['type' => 'code_interpreter']]
                 ]
             ]
         ];
