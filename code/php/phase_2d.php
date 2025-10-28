@@ -196,6 +196,13 @@ $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
             if (result.output?.json_data) showResults(result.output.json_data);
         }
         
+        function handleError(errorMsg, timeline, debugHttp, httpStatus) {
+            showStatus('❌ Error: ' + errorMsg, 'error');
+            if (timeline) showTimeline(timeline);
+            if (debugHttp) showDebugHttp(debugHttp);
+            console.error('Error en F2D:', errorMsg, httpStatus);
+        }
+        
         function showResults(jsonData) {
             processedResult = JSON.stringify(jsonData, null, 2);
             
