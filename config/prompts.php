@@ -305,3 +305,93 @@ Procedure:
 ```
 PROMPT
 ];
+
+/**
+ * FASE 2D: Generar ficha técnica y resumen técnico
+ */
+$PROMPTS[2]['p_generate_technical_sheet'] = [
+    'id' => 'p_generate_technical_sheet',
+    'title' => 'Generar ficha técnica y resumen (p_generate_technical_sheet)',
+    'prompt' => <<<'PROMPT'
+ROLE:
+Act as a technical writer specialised in Cofem fire detection and extinguishing products, with experience in producing installation manuals, maintenance guides, and technical documentation for field technicians.
+Your writing must be accurate, formal, and aligned with standard technical terminology in the fire protection industry.
+Do not add, assume, or fabricate any information not present in the document. If data are missing, omit them.
+
+OBJECTIVE:
+Analyse the document associated with the specified file_id and add to the existing JSON two new fields containing derived technical text:
+- `ficha_tecnica`: a structured and complete technical sheet aimed at installation and maintenance personnel.
+- `resumen_tecnico`: a concise summary of up to 300 characters, faithfully reflecting the essential content.
+
+INSTRUCTIONS:
+1. Use exclusively the content accessible through the specified file_id: {FILE_ID}.
+   - Do not use information from previous phases or other files.
+   - Base your writing only on the actual text of the document.
+
+2. The JSON received from the previous block is:
+   {JSON_PREVIO}
+   - Do not delete or rename any existing keys.
+   - Add only the two new keys described below.
+
+3. Generate the Technical Sheet (`ficha_tecnica`) following these guidelines:
+   - Use a formal, precise, and objective technical tone.
+   - Structure the content with bullet points (• or -) or short sections.
+   - Include, when available in the document:
+     - Functional description of the product or system.
+     - Technical or performance specifications.
+     - Compatible models, variants, or accessories.
+     - Installation conditions or limitations.
+     - Maintenance or inspection requirements.
+     - Applicable standards and certifications.
+   - Do not invent, infer, or fill in missing data.
+   - Maintain factual and terminological accuracy.
+
+4. Generate the Technical Summary (`resumen_tecnico`):
+   - Maximum length: 300 characters.
+   - Write in a concise, factual, and technical style.
+   - Summarise the product's nature, function, and key features.
+   - Must be consistent with the technical sheet and free of subjective or promotional language.
+
+5. Add both fields to the existing JSON without modifying or deleting any previous key.
+
+6. If any of the fields cannot be generated due to missing information, assign an empty string `""` to that field.
+
+7. Maintain key naming in snake_case (all lowercase with underscores).
+
+8. The final output must consist only of the complete and valid JSON object, including all previous fields and the two new ones, with no comments, explanations, or text outside the JSON.
+
+MANDATORY OUTPUT SCHEMA (Full JSON after Phase 2D):
+```json
+{
+  "file_id": "",
+  "nombre_archivo": "",
+  "nombre_producto": "",
+  "codigo_referencia_cofem": "",
+  "tipo_documento": "",
+  "tipo_informacion_contenida": "",
+  "fecha_emision_revision": "",
+  "idiomas_presentes": [],
+  "normas_detectadas": [],
+  "certificaciones_detectadas": [],
+  "manuales_relacionados": [],
+  "otros_productos_relacionados": [],
+  "accesorios_relacionados": [],
+  "uso_formacion_tecnicos": false,
+  "razon_uso_formacion": "",
+  "codigo_encontrado": "",
+  "nombre_encontrado": "",
+  "familia_catalogo": "",
+  "nivel_confianza_identificacion": "",
+  "grupos_de_soluciones": "",
+  "familia": "",
+  "categoria": "",
+  "incidencias_taxonomia": [],
+  "ficha_tecnica": "",
+  "resumen_tecnico": ""
+}
+```
+PROMPT
+    ,
+    'placeholders' => ['FILE_ID', 'JSON_PREVIO'],
+    'output_format' => 'json'
+];
