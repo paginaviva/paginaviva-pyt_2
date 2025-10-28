@@ -10,6 +10,7 @@
   "tmp_dir": "/home/plazzaxy/public_html/ed_cfle/tmp",
   "docs_dir": "/home/plazzaxy/public_html/ed_cfle/docs",
   "code_dir": "/home/plazzaxy/public_html/ed_cfle/code",
+  "config_dir": "/home/plazzaxy/public_html/ed_cfle/config",
   "css_dir": "/home/plazzaxy/public_html/ed_cfle/css",
   "dpi_images": 300,
   "cleanup": {

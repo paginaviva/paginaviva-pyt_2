@@ -1,232 +1,236 @@
 <?php
 /**
  * _TEMPLATE_phase_X.php
- * PLANTILLA DE REFERENCIA para crear nuevas fases
+ * PLANTILLA FRONTEND para crear nuevas fases
  * 
  * INSTRUCCIONES:
- * 1. Copiar este archivo y renombrar a phase_[NUMERO]_proxy.php
- * 2. Completar los métodos abstractos con la lógica específica de la fase
- * 3. NO modificar la estructura base, solo implementar los métodos
+ * 1. Copiar este archivo como phase_X.php (ej: phase_2b.php)
+ * 2. Buscar y reemplazar los siguientes marcadores:
+ *    - {PHASE_NUMBER} → Número de la fase (ej: 2B)
+ *    - {PHASE_TITLE} → Título de la fase (ej: Generar Resumen Ejecutivo)
+ *    - {PHASE_DESCRIPTION} → Descripción breve de la fase
+ *    - {PHASE_EMOJI} → Emoji representativo (ej: 📝, 🔍, 🚀)
+ *    - {PROXY_FILE} → Nombre del archivo proxy (ej: phase_2b_proxy.php)
+ *    - {PREVIOUS_PHASE_FILE} → Archivo que debe existir del paso anterior
+ *    - {PREVIOUS_PHASE_NAME} → Nombre de la fase anterior (ej: Fase 1C)
+ * 3. Adaptar la lógica de validación y procesamiento
+ * 4. Personalizar los paneles de resultados según el tipo de salida
  * 
- * EJEMPLO DE USO:
- * - Para crear Fase 1C: copiar a phase_1c_proxy.php
- * - Implementar getPhasePrompt() con el prompt de F1C
- * - Implementar validatePhaseInput() con validaciones específicas
- * - Implementar prepareOpenAIPayload() con estructura de datos de F1C
- * - Implementar processOpenAIResult() con transformaciones específicas
- * 
- * IMPORTANTE: Este archivo NO se ejecuta, es solo una guía de referencia
+ * ARQUITECTURA COMÚN:
+ * - Usa phase_common.css para estilos compartidos
+ * - Usa phase_common.js para funciones compartidas
+ * - Estructura HTML estándar con paneles colapsables
+ * - Debug HTTP y Timeline siempre visibles
  */
 
-declare(strict_types=1);
-
-require_once __DIR__ . '/phase_base.php';
-
-class PhaseXProxy extends PhaseBase
-{
-    public function __construct(string $docBasename)
-    {
-        // Cambiar 'X' por el número/letra de la fase (ejemplo: '1C', '2A', etc.)
-        parent::__construct($docBasename, 'X');
-    }
-    
-    /**
-     * PASO 1: Definir el prompt específico de esta fase
-     * 
-     * @param array $input Parámetros de entrada del usuario
-     * @return string Prompt completo para OpenAI
-     */
-    protected function getPhasePrompt(array $input): string
-    {
-        // IMPLEMENTAR: Retornar el prompt específico de esta fase
-        return <<<PROMPT
-[AQUÍ VA EL PROMPT DE LA FASE]
-Ejemplo:
-- Analiza el siguiente texto...
-- Extrae los elementos clave...
-- Resume en formato markdown...
-PROMPT;
-    }
-    
-    /**
-     * PASO 2: Validaciones específicas de esta fase
-     * 
-     * @param array $input Parámetros de entrada
-     * @throws Llama $this->fail() si hay error
-     */
-    protected function validatePhaseInput(array $input): void
-    {
-        // IMPLEMENTAR: Validaciones únicas de esta fase
-        // Ejemplo: verificar que existan archivos de fases anteriores
-        
-        // Verificar que existe el archivo de la fase anterior
-        // $previousFile = $this->config['docs_dir'] . '/' . $this->docBasename . '/' . $this->docBasename . '_1B.txt';
-        // if (!file_exists($previousFile)) {
-        //     $this->fail(400, 'Debe completar Fase 1B primero');
-        // }
-        
-        // Validar parámetros específicos
-        // if (empty($input['specific_param'])) {
-        //     $this->fail(400, 'specific_param es requerido');
-        // }
-    }
-    
-    /**
-     * PASO 3: Preparar payload para OpenAI API
-     * 
-     * @param array $input Parámetros de entrada
-     * @param string $prompt Prompt generado
-     * @return array Payload completo para OpenAI
-     */
-    protected function prepareOpenAIPayload(array $input, string $prompt): array
-    {
-        // IMPLEMENTAR: Estructura específica del payload
-        // Puede incluir:
-        // - Cargar archivos de fases anteriores
-        // - Agregar contexto adicional
-        // - Configurar herramientas específicas
-        
-        // Ejemplo: Cargar texto de fase anterior
-        // $previousFile = $this->config['docs_dir'] . '/' . $this->docBasename . '/' . $this->docBasename . '_1B.txt';
-        // $previousText = file_exists($previousFile) ? file_get_contents($previousFile) : '';
-        
-        return [
-            'model' => $input['model'] ?? 'gpt-4o-mini',
-            'messages' => [
-                [
-                    'role' => 'user',
-                    'content' => $prompt
-                    // Si necesitas agregar contexto:
-                    // 'content' => $prompt . "\n\nTexto a procesar:\n" . $previousText
-                ]
-            ],
-            'temperature' => floatval($input['temperature'] ?? 0.1),
-            'max_tokens' => intval($input['max_tokens'] ?? 4000),
-            'top_p' => floatval($input['top_p'] ?? 1.0)
-            
-            // Si la fase necesita herramientas específicas:
-            // 'tools' => [
-            //     ['type' => 'code_interpreter']
-            // ]
-        ];
-    }
-    
-    /**
-     * PASO 4: Procesar resultado de OpenAI
-     * 
-     * @param string $rawText Texto crudo de OpenAI
-     * @return string Texto procesado final
-     */
-    protected function processOpenAIResult(string $rawText): string
-    {
-        // IMPLEMENTAR: Transformaciones específicas del resultado
-        // Por defecto, retornar sin cambios
-        // Puede incluir:
-        // - Limpieza de formato
-        // - Extracción de secciones específicas
-        // - Validación de estructura
-        // - Conversión de formato
-        
-        // Ejemplo: Remover marcadores o limpiar formato
-        // $processed = str_replace('```markdown', '', $rawText);
-        // $processed = str_replace('```', '', $processed);
-        // return trim($processed);
-        
-        return $rawText;
-    }
-}
-
-// ========== EJECUCIÓN ESTÁNDAR (NO MODIFICAR) ==========
-
-header('Content-Type: application/json; charset=utf-8');
-
-$input = json_decode(file_get_contents('php://input'), true) ?? [];
-$docBasename = $input['doc_basename'] ?? '';
-
-if (!$docBasename) {
-    http_response_code(400);
-    echo json_encode(['error' => 'doc_basename requerido']);
+session_start();
+if (empty($_SESSION['user'])) {
+    header('Location: login.php');
     exit;
 }
 
-$proxy = new PhaseXProxy($docBasename);
-$result = $proxy->execute($input);
+require_once __DIR__ . '/lib_apio.php';
 
-echo json_encode($result, JSON_UNESCAPED_UNICODE);
+require_once __DIR__ . '/lib_apio.php';
 
+$cfg = apio_load_config();
+$docBasename = isset($_GET['doc']) ? trim($_GET['doc']) : '';
 
-/* ====== PRE-EJECUCIÓN: entrada y validación específica ====== */
-$in = $rt->readInput();
-
-// Parámetros específicos de esta fase
-$textContent = trim((string) ($in['text_content'] ?? ''));
-$analysisType = trim((string) ($in['analysis_type'] ?? 'summary'));
-$model = trim((string) ($in['model'] ?? 'gpt-4o-mini'));
-$temperature = (float) ($in['temperature'] ?? 0.0);
-$maxTokens = (int) ($in['max_tokens'] ?? 1500);
-
-// Validaciones específicas
-if ($textContent === '') {
-    $rt->fail(400, 'Contenido de texto requerido.');
+if (!$docBasename) {
+    die('Documento no especificado. Use: phase_{PHASE_NUMBER}.php?doc=NOMBRE_DOCUMENTO');
 }
 
-/* ====== EJECUCIÓN: lógica específica de la fase ====== */
+// Verificar que existe el archivo requerido de la fase anterior
+$requiredFile = $cfg['docs_dir'] . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.{PREVIOUS_PHASE_FILE}';
+if (!file_exists($requiredFile)) {
+    die('Error: Debe completar la {PREVIOUS_PHASE_NAME} primero.');
+}
 
-// Ejemplo: preparar prompt específico según tipo de análisis
-$prompts = [
-    'summary' => 'Proporciona un resumen conciso del siguiente texto:',
-    'keywords' => 'Extrae las palabras clave principales del siguiente texto:',
-    'sentiment' => 'Analiza el sentimiento del siguiente texto:',
-];
+// Leer información de la fase anterior si es necesario
+$previousData = file_get_contents($requiredFile);
 
-$prompt = $prompts[$analysisType] ?? $prompts['summary'];
+// Verificar si ya existe el resultado de esta fase
+$outputFile = $cfg['docs_dir'] . DIRECTORY_SEPARATOR . $docBasename . DIRECTORY_SEPARATOR . $docBasename . '.{OUTPUT_EXTENSION}';
+$existingOutput = null;
+if (file_exists($outputFile)) {
+    $existingOutput = file_get_contents($outputFile);
+}
 
-// Payload específico para esta fase
-$payload = [
-    'model' => $model,
-    'temperature' => $temperature,
-    'max_output_tokens' => $maxTokens,
-    'input' => [[
-        'role' => 'user',
-        'content' => [
-            ['type' => 'input_text', 'text' => $prompt . "\n\n" . $textContent],
-        ],
-    ]],
-    // Agregar herramientas específicas si se necesitan
-    // 'tools' => [['type' => 'code_interpreter']],
-];
+// URL del proxy
+$proxyUrl = apio_public_from_cfg_path('/code/php/{PROXY_FILE}');
 
-// Llamada a OpenAI usando función común
-$res = $rt->openaiResponses($payload);
-$txt = $rt->extractOutputText($res);
-
-/* ====== POST-EJECUCIÓN: responder en formato estándar ====== */
-$rt->mark('done');
-$rt->respondOk($txt);
-
-/* 
-NOTAS PARA OTRAS FASES:
-
-1. FASE 2 (Análisis): 
-   - Recibe texto extraído de F1B
-   - Puede hacer análisis específicos (resumen, keywords, etc.)
-   - Usar herramientas como code_interpreter si necesita cálculos
-
-2. FASE 3 (Comparación):
-   - Recibe múltiples textos
-   - Puede usar file_search con vector stores
-   - Comparar documentos usando embeddings
-
-3. FASE N (Personalizada):
-   - Definir parámetros específicos
-   - Usar fetchToTmp() si necesita descargar recursos
-   - Usar openaiUploadFile() si necesita subir archivos
-   - Mantener mismo formato de respuesta estándar
-
-PATRONES COMUNES:
-- Siempre usar $rt->readInput() para entrada
-- Validar parámetros específicos de la fase
-- Usar funciones del proxy común
-- Terminar con $rt->respondOk($result)
-- Mantener formato JSON estándar: {output: {tex}, debug: {http}, timeline}
-*/
+// Configuración de parámetros OpenAI
+$apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
+$apioDefaults = $cfg['apio_defaults'] ?? [];
+?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{PHASE_EMOJI} Fase {PHASE_NUMBER} — {PHASE_TITLE}</title>
+    <link rel="stylesheet" href="<?php echo apio_public_from_cfg_path('/css/styles.css'); ?>">
+    <link rel="stylesheet" href="<?php echo apio_public_from_cfg_path('/code/css/phase_common.css'); ?>">
+</head>
+<body>
+    <?php require_once __DIR__ . '/header.php'; ?>
+    
+    <div class="container">
+        <h2>{PHASE_EMOJI} Fase {PHASE_NUMBER} &mdash; {PHASE_TITLE}</h2>
+        <p>{PHASE_DESCRIPTION}</p>
+        
+        <div class="file-info">
+            <h3>📄 Información del Documento:</h3>
+            <div class="info-display">
+                <strong>Documento:</strong> <?php echo htmlspecialchars($docBasename); ?><br>
+                <strong>Estado:</strong> <?php echo $existingOutput ? '✅ Ya procesado (se puede reprocesar)' : '⏳ Pendiente'; ?>
+            </div>
+        </div>
+        
+        <?php if ($existingOutput): ?>
+        <div class="existing-json-warning">
+            ⚠️ <strong>Nota:</strong> Este documento ya fue procesado. Si lo procesas de nuevo, se sobrescribirá.
+        </div>
+        <?php endif; ?>
+        
+        <div class="params-panel">
+            <h3>⚙️ Parámetros OpenAI API</h3>
+            <form id="phaseForm">
+                <input type="hidden" name="doc_basename" value="<?php echo htmlspecialchars($docBasename); ?>">
+                <div class="param-row">
+                    <div class="param-group">
+                        <label for="model">Modelo:</label>
+                        <select id="model" name="model">
+                            <?php foreach ($apioModels as $model): ?>
+                                <option value="<?php echo htmlspecialchars($model); ?>" 
+                                    <?php echo ($model === ($apioDefaults['model'] ?? 'gpt-4o')) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($model); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <button type="button" id="processBtn" class="process-btn">
+            🚀 Ejecutar {PHASE_TITLE}
+        </button>
+        
+        <div id="statusIndicator" class="status-indicator"></div>
+        
+        <div id="timelinePanel" class="timeline-panel">
+            <div class="timeline-header" onclick="togglePanel('timeline')">⏱️ Timeline de Ejecución</div>
+            <div class="timeline-content" id="timelineContent"></div>
+        </div>
+        
+        <div id="debugPanel" class="debug-panel">
+            <div class="debug-header" onclick="togglePanel('debug')">🔍 Debug HTTP</div>
+            <div class="debug-content"><div id="debugContent" class="debug-json"></div></div>
+        </div>
+        
+        <div id="errorRawPanel" class="error-raw-panel">
+            <div class="error-raw-header">⚠️ Respuesta Cruda del Servidor</div>
+            <div class="error-raw-content">
+                <p><strong>El servidor devolvió HTML en lugar de JSON.</strong></p>
+                <div id="errorRawContent" class="error-raw-html"></div>
+            </div>
+        </div>
+        
+        <div id="resultsPanel" class="results-panel">
+            <div class="results-header">✅ Análisis Completado</div>
+            <div class="results-content">
+                <h3>📄 Resultado:</h3>
+                <div class="results-actions">
+                    <button class="action-btn" onclick="copyResult()">📋 Copiar</button>
+                    <button class="action-btn" onclick="downloadResult()">💾 Descargar</button>
+                </div>
+                <div id="resultsText" class="results-text"></div>
+                
+                <div class="next-phase-section">
+                    <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
+                    <button id="viewFilesBtn" class="btn" style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                        📁 Ver Archivos Generados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="<?php echo apio_public_from_cfg_path('/code/js/phase_common.js'); ?>"></script>
+    <script>
+        const PROXY_URL = '<?php echo $proxyUrl; ?>';
+        const CURRENT_DOC = '<?php echo htmlspecialchars($docBasename); ?>';
+        const processBtn = document.getElementById('processBtn');
+        let processedResult = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            processBtn.addEventListener('click', handleProcess);
+            document.getElementById('viewFilesBtn').onclick = () => viewGeneratedFiles(CURRENT_DOC);
+        });
+        
+        async function handleProcess() {
+            if (!CURRENT_DOC) return alert('No hay documento seleccionado');
+            
+            const modelSelect = document.getElementById('model');
+            processBtn.disabled = true;
+            showStatus('🔄 Procesando...', 'processing');
+            
+            document.getElementById('timelinePanel').style.display = 'none';
+            document.getElementById('resultsPanel').style.display = 'none';
+            document.getElementById('errorRawPanel').style.display = 'none';
+            
+            try {
+                const payload = { doc_basename: CURRENT_DOC };
+                if (modelSelect) payload.model = modelSelect.value;
+                
+                const response = await fetch(PROXY_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const responseText = await response.text();
+                let result;
+                
+                try {
+                    result = JSON.parse(responseText);
+                } catch (e) {
+                    return handleError('Respuesta inválida', responseText, null, null);
+                }
+                
+                if (response.ok && result.output) {
+                    handleSuccess(result);
+                } else {
+                    handleError(result.debug?.error || 'Error', null, result.timeline, result.debug?.http);
+                }
+            } catch (error) {
+                handleError('Error de conexión: ' + error.message, null, null, null);
+            } finally {
+                processBtn.disabled = false;
+            }
+        }
+        
+        function handleSuccess(result) {
+            showStatus('✅ Completado', 'success');
+            if (result.timeline) showTimeline(result.timeline);
+            if (result.debug?.http) showDebugHttp(result.debug.http);
+            if (result.output) showResults(result.output);
+        }
+        
+        function showResults(output) {
+            processedResult = output.text || output;
+            document.getElementById('resultsText').textContent = processedResult;
+            document.getElementById('resultsPanel').style.display = 'block';
+        }
+        
+        function copyResult() {
+            if (processedResult) copyToClipboard(processedResult, 'Copiado');
+        }
+        
+        function downloadResult() {
+            if (processedResult) downloadFile(processedResult, `${CURRENT_DOC}_result.txt`);
+        }
+    </script>
+</body>
+</html>
