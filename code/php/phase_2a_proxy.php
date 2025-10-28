@@ -17,12 +17,14 @@ class Phase2AProxy
     private array $debugHttp = [];
     private string $docBasename;
     private array $config;
+    private array $input;
     private string $fileId;
     private ?string $assistantId = null;
     
-    public function __construct(string $docBasename)
+    public function __construct(string $docBasename, array $input = [])
     {
         $this->docBasename = $docBasename;
+        $this->input = $input;
         $this->config = apio_load_config();
         $this->mark('init');
         
@@ -635,7 +637,7 @@ if (!$docBasename) {
     exit;
 }
 
-$proxy = new Phase2AProxy($docBasename);
+$proxy = new Phase2AProxy($docBasename, $input);
 $result = $proxy->execute($input);
 
 echo json_encode($result, JSON_UNESCAPED_UNICODE);
