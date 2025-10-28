@@ -435,11 +435,13 @@ class Phase2BProxy
     {
         $this->mark('run.poll.start');
         
-        $maxAttempts = 60; // 60 intentos = 60 segundos máximo
+        // Esperar 3 segundos antes del primer polling (dar tiempo al modelo a iniciar)
+        sleep(3);
+        
+        $maxAttempts = 30; // 30 intentos x 2 segundos = 60 segundos máximo
         $attempt = 0;
         
         while ($attempt < $maxAttempts) {
-            sleep(1);
             $attempt++;
             
             $ch = curl_init("https://api.openai.com/v1/threads/{$threadId}/runs/{$runId}");
@@ -449,15 +451,35 @@ class Phase2BProxy
                     'OpenAI-Beta: assistants=v2'
                 ],
                 CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 10,
+                CURLOPT_TIMEOUT => 60, // Timeout de 60 segundos
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => true
             ]);
             
             $resp = curl_exec($ch);
             $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
             
+            // Detectar HTTP 0 (fallo de red/comunicación)
+            if ($resp === false || $status === 0) {
+                $errorMsg = '⚠️ Alerta: No se recibió ninguna respuesta válida del servidor OpenAI (HTTP 0). '
+                          . 'Esto indica un fallo en la comunicación HTTP, no un error de la API. '
+                          . 'Detalles técnicos: ' . ($curlError ?: 'Sin detalles de cURL');
+                
+                $this->debugHttp[] = [
+                    'stage' => 'run.poll',
+                    'attempt' => $attempt,
+                    'error' => 'HTTP 0',
+                    'curl_error' => $curlError,
+                    'details' => 'No se recibió respuesta HTTP válida'
+                ];
+                
+                $this->fail(502, $errorMsg);
+            }
+            
             if ($status < 200 || $status >= 300) {
-                $this->fail(502, 'Error al consultar estado del Run: HTTP ' . $status);
+                $this->fail(502, 'Error al consultar estado del Run: HTTP ' . $status . ' - ' . $resp);
             }
             
             $result = json_decode($resp, true);
@@ -466,7 +488,8 @@ class Phase2BProxy
             $this->debugHttp[] = [
                 'stage' => 'run.poll',
                 'attempt' => $attempt,
-                'status' => $runStatus
+                'status' => $runStatus,
+                'http_code' => $status
             ];
             
             if ($runStatus === 'completed') {
@@ -475,11 +498,17 @@ class Phase2BProxy
             }
             
             if (in_array($runStatus, ['failed', 'cancelled', 'expired'])) {
-                $this->fail(502, 'Run terminó con estado: ' . $runStatus);
+                $failureReason = $result['last_error']['message'] ?? 'Sin detalles';
+                $this->fail(502, 'Run terminó con estado: ' . $runStatus . '. Razón: ' . $failureReason);
+            }
+            
+            // Esperar 2 segundos antes del siguiente intento
+            if ($attempt < $maxAttempts) {
+                sleep(2);
             }
         }
         
-        $this->fail(504, 'Timeout esperando a que el Run complete (60s)');
+        $this->fail(504, 'Timeout esperando a que el Run complete (60s). El modelo está tardando más de lo esperado.');
     }
     
     private function getResponse(string $apiKey, string $threadId): array
