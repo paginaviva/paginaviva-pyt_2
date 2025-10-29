@@ -26,7 +26,13 @@ final class ProxyRuntime
         
         $this->mark('init');
         if ($this->apiKey === '') {
-            $this->fail(500, 'Falta apio_key en config.json.');
+            $configPath = apio_get_config_path();
+            $configExists = file_exists($configPath);
+            $debugInfo = "Config path: {$configPath}, Exists: " . ($configExists ? 'YES' : 'NO');
+            if ($configExists) {
+                $debugInfo .= ", Keys in config: " . implode(', ', array_keys($cfg));
+            }
+            $this->fail(500, "Falta apio_key en config.json. Debug: {$debugInfo}");
         }
     }
 

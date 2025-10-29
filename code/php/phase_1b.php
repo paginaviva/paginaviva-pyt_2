@@ -1,5 +1,5 @@
 <?php
-// phase1b.php - Nueva UI Fase 1B: Procesar PDF con Sistema Proxy
+// phase_1b.php - Nueva UI Fase 1B: Procesar PDF con Sistema Proxy
 // Interfaz moderna con debug en tiempo real usando proxy_common.php
 
 session_start();
@@ -42,7 +42,7 @@ if (is_dir($docsDir)) {
 }
 
 // URLs del sistema proxy
-$proxyUrl = apio_public_from_cfg_path('/code/php/phase1b_proxy.php');
+$proxyUrl = apio_public_from_cfg_path('/code/php/phase_1b_proxy.php');
 
 // Configuración APIO
 $apioModels = $cfg['apio_models'] ?? ['gpt-5-mini', 'gpt-5', 'gpt-4o', 'gpt-4o-mini'];

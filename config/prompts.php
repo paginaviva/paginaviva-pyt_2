@@ -400,3 +400,90 @@ PROMPT
     'placeholders' => ['FILE_ID', 'JSON_PREVIO'],
     'output_format' => 'json'
 ];
+
+/**
+ * FASE 2E: Auditoría y verificación final (QA-Final)
+ */
+$PROMPTS[2]['p_audit_final_verification'] = [
+    'id' => 'p_audit_final_verification',
+    'title' => 'Auditoría y verificación final del JSON',
+    'prompt' => <<<'PROMPT'
+ROLE:
+Act as a technical documentation auditor specialised in Cofem fire detection and extinguishing systems, with advanced knowledge of technical terminology, Spanish standards, and formal documentation style.
+Your task is to verify, correct, and refine the full JSON-F2D using the original document linked to the provided file_id, ensuring absolute factual and linguistic accuracy.
+All writing must comply strictly with the standards of the Real Academia Española (RAE):
+- exclusively Spanish from Spain;
+- no present continuous;
+- no Latin American vocabulary or expressions;
+- formal, technical, and precise language only.
+Do not add, infer, or assume information not contained in the original document.
+
+OBJECTIVE:
+Perform a final technical review and consistency audit of the JSON-F2D by cross-checking each value with the content of the original document associated with file_id.
+Ensure that every value is accurate, clear, and consistent with the document, producing a verified and refined JSON-FINAL ready for publication.
+
+INSTRUCTIONS:
+1. Use exclusively the following inputs:
+   - The full content of the original Cofem document linked to file_id: {FILE_ID}.
+   - The JSON-F2D generated in the previous phase: {JSON_PREVIO}.
+
+2. Compare every field in the JSON-F2D with the original text of the document (file_id).
+   - Verify factual accuracy, numerical values, technical units, and correct terminology.
+   - Correct or complete any field that contains inaccuracies, omissions, or vague expressions.
+   - Reformulate phrases to improve technical clarity and consistency with the source text.
+   - Add any missing data if they appear in the document but were omitted in the JSON.
+
+3. You must not modify, rewrite, or regenerate the following field:
+   - `resumen_tecnico`
+     This field must remain exactly as received.
+
+4. Maintain the following strict editorial and linguistic standards for all other fields:
+   - Write exclusively in Spanish from Spain, conforming to the rules of the Real Academia Española (RAE).
+   - Avoid present continuous, colloquial terms, or Latin American expressions.
+   - Use precise and consistent technical language.
+   - Maintain the original meaning of each field; do not introduce new interpretations.
+   - Ensure proper use of technical symbols, units, and formatting (e.g., "24–35 V", "IP40", "20–95 % HR").
+
+5. Do not remove, rename, or reorder any fields in the JSON.
+   The structure must remain identical to JSON-F2D.
+
+6. If a field cannot be verified or the document lacks the corresponding data, retain the current value without modification.
+
+7. The final output must be a single clean and valid JSON object, representing the fully verified and optimised version (JSON-FINAL).
+   No explanations, comments, or text outside the JSON are allowed.
+
+MANDATORY OUTPUT SCHEMA (JSON-FINAL):
+```json
+{
+  "file_id": "",
+  "nombre_archivo": "",
+  "nombre_producto": "",
+  "codigo_referencia_cofem": "",
+  "tipo_documento": "",
+  "tipo_informacion_contenida": "",
+  "fecha_emision_revision": "",
+  "idiomas_presentes": [],
+  "normas_detectadas": [],
+  "certificaciones_detectadas": [],
+  "manuales_relacionados": [],
+  "otros_productos_relacionados": [],
+  "accesorios_relacionados": [],
+  "uso_formacion_tecnicos": false,
+  "razon_uso_formacion": "",
+  "codigo_encontrado": "",
+  "nombre_encontrado": "",
+  "familia_catalogo": "",
+  "nivel_confianza_identificacion": "",
+  "grupos_de_soluciones": "",
+  "familia": "",
+  "categoria": "",
+  "incidencias_taxonomia": [],
+  "ficha_tecnica": "",
+  "resumen_tecnico": ""
+}
+```
+PROMPT
+    ,
+    'placeholders' => ['FILE_ID', 'JSON_PREVIO'],
+    'output_format' => 'json'
+];

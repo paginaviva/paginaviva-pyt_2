@@ -151,8 +151,8 @@ $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
                 
                 <div class="next-phase-section">
                     <h3 style="margin-top: 0; color: #28a745;">🚀 Continuar con el Flujo</h3>
-                    <button id="continuePhaseBtn" class="btn" disabled style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: not-allowed;">
-                        ➡️ Continuar (próximamente)
+                    <button id="continuePhaseBtn" class="btn" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer;">
+                        🔍 Continuar a Fase 2E (Auditoría Final)
                     </button>
                     <button id="viewFilesBtn" class="btn" style="background: #17a2b8; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; margin-left: 10px;">
                         📁 Ver Archivos Generados
@@ -172,6 +172,9 @@ $apioModels = $cfg['apio_models'] ?? ['gpt-4o', 'gpt-4o-mini', 'gpt-4'];
         document.addEventListener('DOMContentLoaded', () => {
             processBtn.addEventListener('click', handleProcess);
             document.getElementById('viewFilesBtn').onclick = () => viewGeneratedFiles(CURRENT_DOC);
+            document.getElementById('continuePhaseBtn').onclick = () => {
+                window.location.href = `phase_2e.php?doc=${CURRENT_DOC}`;
+            };
         });
         
         async function handleProcess() {
