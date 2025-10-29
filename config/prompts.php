@@ -314,14 +314,15 @@ $PROMPTS[2]['p_generate_technical_sheet'] = [
     'title' => 'Generar ficha técnica y resumen (p_generate_technical_sheet)',
     'prompt' => <<<'PROMPT'
 ROLE:
-Act as a technical writer specialised in Cofem fire detection and extinguishing products, with experience in producing installation manuals, maintenance guides, and technical documentation for field technicians.
-Your writing must be accurate, formal, and aligned with standard technical terminology in the fire protection industry.
+Act as a technical writer specialised in Cofem fire detection and extinguishing products, with experience in producing installation manuals, maintenance guides, and technical documentation for professional technicians.
+Your writing must be accurate, formal, and aligned with standard technical terminology used in Spain.
+You must comply strictly with linguistic and stylistic rules of the Real Academia Española (RAE).
 Do not add, assume, or fabricate any information not present in the document. If data are missing, omit them.
 
 OBJECTIVE:
 Analyse the document associated with the specified file_id and add to the existing JSON two new fields containing derived technical text:
-- `ficha_tecnica`: a structured and complete technical sheet aimed at installation and maintenance personnel.
-- `resumen_tecnico`: a concise summary of up to 300 characters, faithfully reflecting the essential content.
+- `ficha_tecnica`: a structured and complete technical sheet intended for installation and maintenance personnel.
+- `resumen_tecnico`: a concise summary (maximum 300 characters) that accurately synthesises the document's essential content.
 
 INSTRUCTIONS:
 1. Use exclusively the content accessible through the specified file_id: {FILE_ID}.
@@ -334,6 +335,8 @@ INSTRUCTIONS:
    - Add only the two new keys described below.
 
 3. Generate the Technical Sheet (`ficha_tecnica`) following these guidelines:
+   - Write exclusively in Spanish from Spain, in strict accordance with the rules of the Real Academia Española (RAE).
+   - Avoid the present continuous tense, and do not use Latin American words, expressions, or syntax.
    - Use a formal, precise, and objective technical tone.
    - Structure the content with bullet points (• or -) or short sections.
    - Include, when available in the document:
@@ -346,13 +349,15 @@ INSTRUCTIONS:
    - Do not invent, infer, or fill in missing data.
    - Maintain factual and terminological accuracy.
 
-4. Generate the Technical Summary (`resumen_tecnico`):
+4. Generate the Technical Summary (`resumen_tecnico`) with the following requirements:
+   - Write exclusively in Spanish from Spain, conforming to Real Academia Española (RAE) standards.
+   - Avoid the present continuous and any Latin American expressions or constructions.
    - Maximum length: 300 characters.
-   - Write in a concise, factual, and technical style.
-   - Summarise the product's nature, function, and key features.
-   - Must be consistent with the technical sheet and free of subjective or promotional language.
+   - Maintain a concise, factual, and technical tone.
+   - Summarise faithfully the product's nature, function, and essential characteristics.
+   - Must remain consistent with the ficha_tecnica and contain no subjective or promotional language.
 
-5. Add both fields to the existing JSON without modifying or deleting any previous key.
+5. Add both fields to the existing JSON, without modifying or deleting any previous key.
 
 6. If any of the fields cannot be generated due to missing information, assign an empty string `""` to that field.
 
