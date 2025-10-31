@@ -1,0 +1,49 @@
+{
+    "file_id": "file-QZQCiycLZBLPftszGcVuaY",
+    "nombre_archivo": "MSTAY_FICHA.txt",
+    "nombre_producto": "Módulo de señales técnicas MSTAY",
+    "codigo_referencia_cofem": "",
+    "tipo_documento": "Especificaciones técnicas",
+    "tipo_informacion_contenida": "Características técnicas y funcionales del producto",
+    "fecha_emision_revision": "",
+    "idiomas_presentes": [
+        "español"
+    ],
+    "normas_detectadas": [
+        {
+            "nombre": "EN 54-18",
+            "referencia": "EN 54-18",
+            "informacion_complementaria": ""
+        }
+    ],
+    "certificaciones_detectadas": [
+        {
+            "nombre": "AENOR",
+            "referencia": "EN 54-18",
+            "informacion_complementaria": ""
+        },
+        {
+            "nombre": "CE",
+            "referencia": "Reglamento Europeo de Productos de la Construcción (UE) Nº305/2011",
+            "informacion_complementaria": ""
+        }
+    ],
+    "manuales_relacionados": [],
+    "otros_productos_relacionados": [],
+    "accesorios_relacionados": [],
+    "uso_formacion_tecnicos": true,
+    "razon_uso_formacion": "El documento proporciona especificaciones técnicas y funcionales claves del módulo, vitales para formación técnica sobre conexión, supervisión y gestión de alarmas y averías en sistemas complejos.",
+    "codigo_encontrado": "",
+    "nombre_encontrado": "",
+    "familia_catalogo": "",
+    "nivel_confianza_identificacion": "",
+    "grupos_de_soluciones": "",
+    "familia": "",
+    "categoria": "Sistemas de señalización y control",
+    "incidencias_taxonomia": [
+        "No se encontró coincidencia en Productos_Cofem.csv o Taxonomía_Cofem.csv para Módulo de señales técnicas MSTAY"
+    ],
+    "ficha_tecnica": "• Descripción funcional: El módulo MSTAY es un dispositivo microprocesado y direccionable que integra un aislador de cortocircuito, esencial para gestión de señales.\n• Entradas: Presenta dos entradas para detectar el estado (abierto/cerrado) de un contacto seco con resistencia de 10 kΩ. En estado de reposo, el contacto debe permanecer abierto; si hay anomalía, debe cerrarse. IN1 detecta cierre como alarma, mientras que IN2 lo detecta como avería.\n• Instalación: Se coloca directamente en el bucle del sistema contra incendios y supervisa la línea externa con resistencia de 33 kΩ, señalando línea abierta o cruzada.\n• Normativa y certificaciones: cumple con la norma EN 54-18 y posee certificaciones AENOR y CE.",
+    "resumen_tecnico": "El módulo MSTAY, microprocesado y direccionable, con aislador de cortocircuito, detecta señales de alarma y avería a través de entradas de contacto seco, conformes con la norma EN 54-18. Certificado por AENOR y CE.",
+    "descripcion_larga_producto": "1. Módulo de señales técnicas MSTAY – qué es: Este módulo direccionable y microprocesado actúa como un componente esencial en la gestión de señales en sistemas de seguridad contra incendios, integrando un aislador de cortocircuito para asegurar la detección precisa de anomalías en el bucle.\n\n2. Beneficios y ventajas operativas: Su diseño direccionable permite un monitoreo eficaz y aísla segmentos dañados para evitar interrupciones. La estructura microprocesada optimiza el procesamiento y respuesta a señales de estado.\n\n3. Usos y aplicaciones: Ideal para la implementación en sistemas complejos de protección, ofreciendo funcionalidad específicamente adaptada a la vigilancia de alarmas y averías mediante contactos secos.\n\n4. Resumen técnico de operación: Mediante resistencias de 10 kΩ en contactos secos, las entradas IN1 y IN2 detectan cambios de estado que se traducen en señales de alarma y avería, garantizando un flujo de información continuo y preciso.\n\n5. Cumplimiento normativo y confiabilidad: Cumple con la norma EN 54-18 y posee certificaciones CE y AENOR, afirmando su calidad y confiabilidad en entornos críticos de protección contra incendios."
+}

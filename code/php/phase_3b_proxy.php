@@ -499,39 +499,68 @@ class Phase3BProxy
     {
         $this->mark('json.extract.start');
         
-        // Buscar el mensaje más reciente del asistente
+        // Buscar el último mensaje del assistant
         foreach ($messages as $msg) {
-            if (($msg['role'] ?? '') !== 'assistant') continue;
+            if (($msg['role'] ?? '') !== 'assistant') {
+                continue;
+            }
             
-            $content = $msg['content'] ?? [];
-            foreach ($content as $block) {
-                if (($block['type'] ?? '') !== 'text') continue;
-                
-                $text = $block['text']['value'] ?? '';
-                if (empty($text)) continue;
-                
-                // Buscar bloque JSON en el texto
-                if (preg_match('/```json\s*(\{.*?\})\s*```/s', $text, $matches)) {
-                    $jsonText = $matches[1];
-                } elseif (preg_match('/(\{[^{}]*"nombre_producto"[^{}]*\})/s', $text, $matches)) {
-                    $jsonText = $matches[1];
-                } else {
-                    // Intentar todo el texto como JSON
-                    $jsonText = $text;
+            $content = $msg['content'][0]['text']['value'] ?? '';
+            if (empty($content)) {
+                continue;
+            }
+            
+            // Guardar contenido completo en debug para diagnóstico
+            $this->debugHttp[] = [
+                'stage' => 'json.extract',
+                'raw_content_length' => mb_strlen($content),
+                'raw_content_preview' => mb_substr($content, 0, 500)
+            ];
+            
+            $jsonText = '';
+            
+            // Intento 1: JSON entre triple backticks con etiqueta json
+            if (preg_match('/```json\s*(\{.*\})\s*```/s', $content, $matches)) {
+                $jsonText = $matches[1];
+            }
+            // Intento 2: JSON entre triple backticks sin etiqueta
+            elseif (preg_match('/```\s*(\{.*\})\s*```/s', $content, $matches)) {
+                $jsonText = $matches[1];
+            }
+            // Intento 3: JSON directo (sin backticks) - greedy para capturar JSON anidado
+            elseif (preg_match('/(\{.*\})/s', $content, $matches)) {
+                $jsonText = $matches[1];
+            }
+            else {
+                $this->fail(502, 'No se encontró JSON en la respuesta del assistant. Contenido: ' . mb_substr($content, 0, 200));
+            }
+            
+            $jsonData = json_decode($jsonText, true);
+            
+            if (!$jsonData || !is_array($jsonData)) {
+                $this->fail(502, 'JSON inválido recibido del assistant: ' . json_last_error_msg() . '. JSON: ' . mb_substr($jsonText, 0, 300));
+            }
+            
+            // Validar que tiene el campo nuevo y campos esenciales
+            if (!$this->validateOptimizedJSON($jsonData)) {
+                $missingFields = [];
+                if (!array_key_exists('descripcion_larga_producto', $jsonData)) {
+                    $missingFields[] = 'descripcion_larga_producto';
                 }
-                
-                $jsonData = json_decode($jsonText, true);
-                if (is_array($jsonData)) {
-                    // Validar que tiene el campo nuevo
-                    if ($this->validateOptimizedJSON($jsonData)) {
-                        $this->mark('json.extracted');
-                        return $jsonData;
+                $requiredKeys = ['nombre_producto', 'ficha_tecnica', 'resumen_tecnico'];
+                foreach ($requiredKeys as $key) {
+                    if (!array_key_exists($key, $jsonData)) {
+                        $missingFields[] = $key;
                     }
                 }
+                $this->fail(502, 'JSON optimizado inválido. Faltan campos: ' . implode(', ', $missingFields));
             }
+            
+            $this->mark('json.extracted');
+            return $jsonData;
         }
         
-        $this->fail(502, 'No se pudo extraer JSON optimizado válido de la respuesta del asistente');
+        $this->fail(502, 'No se encontró mensaje del assistant en el thread');
     }
     
     private function validateOptimizedJSON(array $json): bool
@@ -563,22 +592,38 @@ class Phase3BProxy
         
         // SOBRESCRIBIR JSON-FINAL con versión optimizada
         $jsonFinalPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '.json';
-        file_put_contents(
+        $savedJson = file_put_contents(
             $jsonFinalPath,
-            json_encode($jsonOptimized, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            json_encode($jsonOptimized, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         );
         
-        // Guardar log de fase 3B con metadata
+        // Guardar log de fase 3B con metadata COMPLETA (JSON con debug APIO)
         $logPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_3B.log';
-        $descripcionLength = mb_strlen($jsonOptimized['descripcion_larga_producto'] ?? '');
-        $logEntry = sprintf(
-            "[%s] F3B: Optimización SEO completada.\nModelo: %s\nDescripción larga: %d palabras (%d caracteres)\nCampos optimizados: ficha_tecnica, resumen_tecnico, razon_uso_formacion\nCampo añadido: descripcion_larga_producto\n",
-            date('Y-m-d H:i:s'),
-            $this->model,
-            str_word_count($jsonOptimized['descripcion_larga_producto'] ?? ''),
-            $descripcionLength
-        );
-        file_put_contents($logPath, $logEntry, FILE_APPEND);
+        
+        $descripcionLarga = $jsonOptimized['descripcion_larga_producto'] ?? '';
+        $wordCount = str_word_count($descripcionLarga);
+        $charCount = mb_strlen($descripcionLarga);
+        
+        $logData = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'phase' => '3B',
+            'status' => 'SUCCESS',
+            'doc_basename' => $this->docBasename,
+            'file_id' => $this->fileId,
+            'assistant_id' => $this->assistantId,
+            'model' => $this->model,
+            'descripcion_larga_producto' => [
+                'words' => $wordCount,
+                'characters' => $charCount
+            ],
+            'campos_optimizados' => ['ficha_tecnica', 'resumen_tecnico', 'razon_uso_formacion'],
+            'campo_nuevo' => 'descripcion_larga_producto',
+            'json_final_saved' => $savedJson !== false,
+            'timeline' => $this->timeline,
+            'debug_http' => $this->debugHttp
+        ];
+        
+        file_put_contents($logPath, json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         
         // NO guardar assistant_id (F3B usa assistant fresco cada vez)
         

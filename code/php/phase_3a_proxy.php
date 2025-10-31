@@ -523,22 +523,33 @@ class Phase3AProxy
         
         // Guardar JSON-SEO con nombre: NombreDocumento_SEO.json
         $jsonSeoPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_SEO.json';
-        file_put_contents(
+        $savedJsonSEO = file_put_contents(
             $jsonSeoPath,
-            json_encode($jsonSEO, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            json_encode($jsonSEO, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
         );
         
-        // Guardar log de fase 3A
+        // Guardar log de fase 3A con metadata COMPLETA (JSON con debug APIO)
         $logPath = $docDir . DIRECTORY_SEPARATOR . $this->docBasename . '_3A.log';
-        $logEntry = sprintf(
-            "[%s] F3A: Análisis terminológico SEO completado. Modelo: %s. Términos: kw=%d, kw_lt=%d, semánticos=%d\n",
-            date('Y-m-d H:i:s'),
-            $this->model,
-            count($jsonSEO['kw'] ?? []),
-            count($jsonSEO['kw_lt'] ?? []),
-            count($jsonSEO['terminos_semanticos'] ?? [])
-        );
-        file_put_contents($logPath, $logEntry, FILE_APPEND);
+        
+        $logData = [
+            'timestamp' => date('Y-m-d H:i:s'),
+            'phase' => '3A',
+            'status' => 'SUCCESS',
+            'doc_basename' => $this->docBasename,
+            'file_id' => $this->fileId,
+            'assistant_id' => $this->assistantId,
+            'model' => $this->model,
+            'terminos_extraidos' => [
+                'kw' => count($jsonSEO['kw'] ?? []),
+                'kw_lt' => count($jsonSEO['kw_lt'] ?? []),
+                'terminos_semanticos' => count($jsonSEO['terminos_semanticos'] ?? [])
+            ],
+            'json_seo_saved' => $savedJsonSEO !== false,
+            'timeline' => $this->timeline,
+            'debug_http' => $this->debugHttp
+        ];
+        
+        file_put_contents($logPath, json_encode($logData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
         
         // NO guardar assistant_id (F3A usa assistant fresco cada vez)
         
