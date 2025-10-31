@@ -698,7 +698,8 @@ $prompt = str_replace('{FILE_ID}', $fileId, $prompt);
   {NB_archivo}/                    # Directorio por documento
     {NB_archivo}.pdf               # PDF original
     {NB_archivo}.txt               # Texto extraído (F1B)
-    {NB_archivo}.json              # JSON progresivo (F2A→F2B→F2C→F2D)
+    {NB_archivo}.json              # JSON progresivo (F2A→F2B→F2C→F2D→F2E→F3B)
+    {NB_archivo}_SEO.json          # JSON-SEO (F3A: kw, kw_lt, terminos_semanticos)
     
     {NB_archivo}.log               # Log F1B
     {NB_archivo}_1C.log            # Log F1C
@@ -706,11 +707,16 @@ $prompt = str_replace('{FILE_ID}', $fileId, $prompt);
     {NB_archivo}_2B.log            # Log F2B
     {NB_archivo}_2C.log            # Log F2C
     {NB_archivo}_2D.log            # Log F2D
+    {NB_archivo}_2E.log            # Log F2E
+    {NB_archivo}_3A.log            # Log F3A
+    {NB_archivo}_3B.log            # Log F3B
     
     {NB_archivo}_2A.assistant_id   # Assistant ID F2A
     {NB_archivo}_2B.assistant_id   # Assistant ID F2B
     {NB_archivo}_2C.assistant_id   # Assistant ID F2C
     {NB_archivo}_2D.assistant_id   # Assistant ID F2D
+    {NB_archivo}_2E.assistant_id   # Assistant ID F2E
+    # F3A y F3B usan assistants FRESH (no persisten .assistant_id)
 ```
 
 ### Evolución del JSON
@@ -764,6 +770,31 @@ $prompt = str_replace('{FILE_ID}', $fileId, $prompt);
   ...todos los de F2C...,
   "ficha_tecnica": "...",
   "resumen_tecnico": "..."
+}
+```
+
+**F2E (24 campos auditados):**
+```json
+{
+  ...mismos 24 campos de F2D, pero verificados y refinados...
+  // NO añade nuevos campos, solo audita precisión
+}
+```
+
+**F3A (JSON-SEO independiente, 3 campos):**
+```json
+{
+  "kw": "keyword principal del producto",
+  "kw_lt": ["long-tail keyword 1", "long-tail 2", ...],
+  "terminos_semanticos": ["término técnico 1", "término 2", ...]
+}
+```
+
+**F3B (25 campos = 24 optimizados + 1 nuevo HTML):**
+```json
+{
+  ...todos los de F2E optimizados con SEO...,
+  "descripcion_larga_producto": "<p>Descripción HTML con <strong>keywords</strong>...</p>"
 }
 ```
 
